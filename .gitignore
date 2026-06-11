@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+common/config.yaml
+common/user.md
+common/chats/*
+!common/chats/.gitkeep
+workspace/*
+!workspace/.gitkeep
+

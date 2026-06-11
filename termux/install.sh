@@ -1,0 +1,50 @@
+#!/data/data/com.termux/files/usr/bin/bash
+
+# VoidClaw Termux Installer
+# Optimized for Android
+
+# Colors
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+clear
+echo -e "${CYAN}================================================================${NC}"
+echo -e "${YELLOW}               VOIDCLAW ANDROID (TERMUX) SETUP                  ${NC}"
+echo -e "${CYAN}================================================================${NC}"
+
+# 1. System Update & Dependencies
+echo -e "${BLUE}[*] Updating system packages...${NC}"
+pkg update -y && pkg upgrade -y
+
+echo -e "${BLUE}[*] Installing dependencies (Python, Git, Build Tools)...${NC}"
+pkg install -y python git clang libyaml make
+
+# 2. Virtual Environment
+echo -e "${BLUE}[*] Setting up Python virtual environment...${NC}"
+cd ..
+if [ ! -d ".venv" ]; then
+    python -m venv .venv
+fi
+source .venv/bin/activate
+
+echo -e "${BLUE}[*] Installing/Updating pip...${NC}"
+pip install --upgrade pip
+
+echo -e "${BLUE}[*] Installing project requirements...${NC}"
+# Termux sometimes needs help with certain packages
+pip install wheel
+pip install -r requirements.txt
+
+# 3. Configuration Wizard
+echo -e "\n${GREEN}[+] Installation complete!${NC}"
+echo -e "${YELLOW}[*] Launching Configuration Wizard...${NC}"
+python core/setup.py
+
+echo -e "\n${CYAN}================================================================${NC}"
+echo -e "${GREEN}[!] Setup Finished!${NC}"
+echo -e "${YELLOW}[*] To run the agent, use: ./termux/run.sh${NC}"
+echo -e "${CYAN}================================================================${NC}"
