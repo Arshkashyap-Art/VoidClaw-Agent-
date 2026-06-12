@@ -20,8 +20,10 @@ echo -e "${CYAN}================================================================
 echo -e "${BLUE}[*] Updating system packages...${NC}"
 pkg update -y && pkg upgrade -y
 
-echo -e "${BLUE}[*] Installing dependencies (Python, Git, Build Tools)...${NC}"
-pkg install -y python git clang libyaml make
+echo -e "${BLUE}[*] Installing dependencies (Python, Git, Build Tools, Math Libs)...${NC}"
+pkg install -y python git clang libyaml make cmake openblas openblas-dev mathjax
+# Optional but recommended for faster numpy installs on termux:
+MATHLIB=openblas pkg install -y python-numpy
 
 # 2. Virtual Environment
 echo -e "${BLUE}[*] Setting up Python virtual environment...${NC}"

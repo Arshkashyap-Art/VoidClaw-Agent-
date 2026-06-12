@@ -59,8 +59,9 @@ Turn your Android phone into an autonomous AI Command Center!
 1.  **Install Termux:** Download and install [Termux from F-Droid](https://f-droid.org/en/packages/com.termux/) (Do not use the Google Play Store version, it is deprecated).
 2.  **Open Termux and run the following commands one by one:**
     ```bash
-    # Step 1: Update packages and install git
+    # Step 1: Update packages and enable required repositories
     pkg update -y && pkg upgrade -y
+    pkg install x11-repo tur-repo -y
     pkg install git -y
 
     # Step 2: Clone the VoidClaw repository
