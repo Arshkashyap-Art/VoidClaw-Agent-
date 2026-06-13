@@ -205,7 +205,8 @@ Tools:
 - local_rag_search: query (Semantic search across all workspace files)
 - schedule_task: trigger_type ('cron' or 'interval'), schedule_args (cron string or minutes), instruction (Goal for the agent)
 - list_tasks: (List all scheduled autonomous tasks)
-- remove_task: task_id (Cancel a task)
+- remove_task: keyword (Remove a task using a keyword from its instruction, e.g., 'blink' or 'water')
+- remove_all_tasks: (Cancel all active background tasks)
 
 Autonomous Operation:
 You can schedule yourself to perform tasks 24/7. 
@@ -213,9 +214,9 @@ Example: Use 'schedule_task' with 'interval' and '60' to remind the user of some
 Example: Use 'schedule_task' with 'cron' and '0 8 * * *' to perform a daily morning briefing.
 When a scheduled task triggers, you will receive a message from 'SYSTEM' and you should execute the instruction autonomously.
 
-To remove a task (like a reminder):
-1. First use 'list_tasks' to find the task_id matching the instruction (e.g., "water reminder").
-2. Then use 'remove_task' with that specific task_id.
+To stop or remove a task (like a reminder):
+Call 'remove_task' IMMEDIATELY using a keyword from the instruction (e.g., if the user says "stop blink reminder", use remove_task(keyword="blink")). 
+Do NOT call 'list_tasks' first. Use keyword-based removal for instant action.
 
 Respond normally for final answers.
 """

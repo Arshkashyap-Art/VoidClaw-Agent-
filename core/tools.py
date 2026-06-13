@@ -32,7 +32,8 @@ class ToolManager:
             "local_rag_search": self.local_rag_search,
             "schedule_task": self.schedule_task,
             "list_tasks": self.list_tasks,
-            "remove_task": self.remove_task
+            "remove_task": self.remove_task,
+            "remove_all_tasks": self.remove_all_tasks
         }
         if tool_name in tools:
             return tools[tool_name](**args)
@@ -307,6 +308,15 @@ class ToolManager:
             task_list.append(f"ID: {job.id} | Trigger: {job.trigger} | Instruction: {job.args[2]}")
         return "\n".join(task_list)
 
-    def remove_task(self, task_id):
+    def remove_task(self, keyword):
         if not self.agent: return "Agent not connected."
-        return self.agent.remove_scheduled_task(task_id)
+        return self.agent.remove_scheduled_task(keyword)
+
+    def remove_all_tasks(self):
+        if not self.agent: return "Agent not connected."
+        jobs = self.agent.scheduler.get_jobs()
+        if not jobs: return "No active tasks to remove."
+        for job in jobs:
+            self.agent.scheduler.remove_job(job.id)
+        self.agent._save_tasks()
+        return "Success: All scheduled tasks have been terminated."
