@@ -228,12 +228,16 @@ Respond normally for final answers.
 
     async def process_message(self, user_input, source="TERM"):
         prefix = "👤 YOU" if source == "TERM" else f"👤 YOU ({source})"
-        print(f"\n{self.AMBER}{self.BOLD}{prefix}{self.RESET} {self.DIM}»{self.RESET} {user_input}")
+        if source != "AUTO":
+            print(f"\n{self.AMBER}{self.BOLD}{prefix}{self.RESET} {self.DIM}»{self.RESET} {user_input}")
+            self.log_chat(f"USER ({source})", user_input)
+            self.history.append({"role": "user", "content": user_input})
         
-        self.log_chat(f"USER ({source})", user_input)
-        self.history.append({"role": "user", "content": user_input})
-        
-        context = "\n".join([f"{m['role']}: {m['content']}" for m in self.history[-10:]])
+        # Limit history context to prevent loops
+        context_history = self.history[-10:] if source != "AUTO" else []
+        context = "\n".join([f"{m['role']}: {m['content']}" for m in context_history])
+        if source == "AUTO":
+            context = f"SYSTEM: {user_input}"
         
         for _ in range(5):
             response = await self.model.generate_response(context, self.system_prompt)
