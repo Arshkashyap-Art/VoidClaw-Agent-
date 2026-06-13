@@ -108,34 +108,69 @@ class VoidClawAgent:
         except Exception as e:
             return f"Error scheduling task: {str(e)}"
 
-    def remove_scheduled_task(self, task_id):
+    def remove_scheduled_task(self, identifier):
         try:
-            self.scheduler.remove_job(task_id)
-            self._save_tasks()
-            return f"Success: Task {task_id} removed."
-        except:
-            return f"Error: Task {task_id} not found."
+            # 1. Try removing by ID
+            try:
+                self.scheduler.remove_job(identifier)
+                self._save_tasks()
+                return f"Success: Task ID {identifier} removed."
+            except:
+                pass
+
+            # 2. Try searching by instruction content (fuzzy)
+            jobs = self.scheduler.get_jobs()
+            removed_count = 0
+            for job in jobs:
+                instruction = job.args[2].lower()
+                if identifier.lower() in instruction:
+                    self.scheduler.remove_job(job.id)
+                    removed_count += 1
+            
+            if removed_count > 0:
+                self._save_tasks()
+                return f"Success: Removed {removed_count} task(s) matching '{identifier}'."
+            
+            return f"Error: No task found matching '{identifier}'."
+        except Exception as e:
+            return f"Error removing task: {str(e)}"
 
     async def execute_scheduled_task(self, t_type, t_args, instruction):
-        RESET = '\033[0m'
-        print(f"\n{self.ORANGE}{self.BOLD}⏰ AUTONOMOUS TASK{RESET} {self.DIM}»{RESET} {instruction}")
-        reply = await self.process_message(f"AUTONOMOUS SCHEDULED TASK: {instruction}", source="AUTO")
-        
-        # Broadcast to Web UI
-        push_notification(reply)
+        try:
+            # Dynamically update system prompt with current time before processing
+            self.system_prompt = self._load_system_prompt()
+            
+            print(f"\n{self.ORANGE}{self.BOLD}⏰ AUTONOMOUS TASK{self.RESET} {self.DIM}»{self.RESET} {instruction}")
+            reply = await self.process_message(f"AUTONOMOUS SCHEDULED TASK: {instruction}", source="AUTO")
+            
+            if reply:
+                # Broadcast to Web UI
+                try:
+                    push_notification(reply)
+                except Exception as e:
+                    print(f"Web Notification Error: {e}")
 
-        # If running in Telegram, push the notification
-        if self.tg_app and self.last_tg_chat_id:
-            try:
-                await self.tg_app.bot.send_message(chat_id=self.last_tg_chat_id, text=f"🔔 {reply}")
-            except Exception as e:
-                print(f"Failed to push TG notification: {e}")
+                # If running in Telegram, push the notification
+                if self.tg_app and self.last_tg_chat_id:
+                    try:
+                        await self.tg_app.bot.send_message(chat_id=self.last_tg_chat_id, text=f"🔔 {reply}")
+                    except Exception as e:
+                        print(f"Telegram Notification Error: {e}")
+        except Exception as e:
+            import traceback
+            print(f"\n{self.RED}{self.BOLD}[!] CRITICAL ERROR IN SCHEDULED TASK:{self.RESET} {e}")
+            traceback.print_exc()
 
     def _load_system_prompt(self):
         user_md_path = os.path.join(self.base_dir, 'common', 'user.md')
+        if not os.path.exists(user_md_path):
+            with open(user_md_path, 'w', encoding='utf-8') as f:
+                f.write("# User Profile\n- Initialized")
+                
         with open(user_md_path, 'r', encoding='utf-8') as f:
             user_content = f.read()
         
+        # Injected live time
         current_time = datetime.now().strftime("%A, %B %d, %Y, %H:%M:%S")
         
         return f"""
@@ -144,9 +179,10 @@ class VoidClawAgent:
 You are VoidClaw, an evolutionary autonomous agent.
 You were conceptualized and built by Mohd Abuzar. When asked about your creator, state this proudly and professionally.
 IMPORTANT: You operate in distinct conversation threads. 
-Your primary directive is to GROW AND ADAPT to the user over time, similar to advanced AI constructs like Hermes.
 
 System Time: {current_time}
+
+Your primary directive is to GROW AND ADAPT to the user over time...
 
 Each thread is isolated, but you have long-term knowledge from the "User Profile" section above.
 Whenever you deduce new information about the user's workflow, expertise level, personality, or preferences, you MUST autonomously use the 'update_user_profile' tool to record it.
