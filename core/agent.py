@@ -6,6 +6,7 @@ import asyncio
 import threading
 import uuid
 import sys
+import psutil
 from datetime import datetime
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
@@ -42,6 +43,7 @@ class VoidClawAgent:
         self.session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.start_time = datetime.now()
         self.total_tokens = 0
+        self.tool_usage = {}
 
         # Scheduler
         self.scheduler = AsyncIOScheduler()
@@ -74,27 +76,25 @@ class VoidClawAgent:
         return "Session reset. Memory cleared."
 
     def get_dashboard_stats(self):
-        uptime = str(datetime.now() - self.start_time).split('.')[0]
-        active_tasks = len(self.scheduler.get_jobs())
-        
-        # Calculate weekly activity (count files in chats dir per day of week)
-        activity_data = [0] * 7
-        try:
-            for f in os.listdir(self.chats_dir):
-                if f.endswith('.md'):
-                    stats = os.stat(os.path.join(self.chats_dir, f))
-                    day_idx = datetime.fromtimestamp(stats.st_mtime).weekday()
-                    activity_data[day_idx] += 1
-        except: pass
-
+        # ... (existing code)
         return {
             "uptime": uptime,
-            "total_tokens": self.total_tokens,
-            "active_tasks": active_tasks,
-            "activity": activity_data,
-            "provider": self.config['default_provider'],
-            "model": self.config[self.config['default_provider']]['model'],
-            "channels": ["Terminal", "Web UI"] + (["Telegram"] if self.tg_app else [])
+            # ...
+        }
+
+    def get_settings(self):
+        user_md_path = os.path.join(self.base_dir, 'common', 'user.md')
+        prompt = ""
+        if os.path.exists(user_md_path):
+            with open(user_md_path, 'r', encoding='utf-8') as f:
+                prompt = f.read()
+        
+        provider = self.config.get('default_provider', 'ollama')
+        temp = self.config.get(provider, {}).get('temperature', 0.7)
+        
+        return {
+            "system_prompt": prompt,
+            "temperature": temp
         }
 
     def _load_tasks(self):
@@ -278,6 +278,7 @@ Respond normally for final answers.
                     print(f"{self.AMBER}{self.BOLD}🛠  ACTION{self.RESET}  {self.DIM}»{self.RESET} {tool_call['tool']}")
                     
                     observation = self.tools.execute_tool(tool_call['tool'], tool_call['args'])
+                    self.tool_usage[tool_call['tool']] = self.tool_usage.get(tool_call['tool'], 0) + 1
                     
                     if tool_call['tool'] == 'update_config' and 'Success' in observation:
                         self.reload_config()

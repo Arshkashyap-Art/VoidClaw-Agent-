@@ -98,24 +98,44 @@
         }
         .toggle-sidebar-btn:hover { color: var(--accent); border-color: var(--accent); background: rgba(249, 115, 22, 0.05); }
 
+        .actions { display: flex; gap: 20px; align-items: center; }
+        .theme-btn { cursor: pointer; color: var(--text-secondary); font-size: 20px; transition: 0.2s; border: none; background: transparent; }
+
         /* Dashboard View */
         .dashboard-view {
             flex: 1; padding: 40px; overflow-y: auto; display: none; flex-direction: column; gap: 32px;
-            width: 100%; max-width: 1200px; margin: 0 auto; animation: fadeIn 0.4s ease;
+            width: 100%; max-width: 1300px; margin: 0 auto; animation: fadeIn 0.4s ease;
         }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
         .stat-card {
             background: var(--bg-card); border: 1px solid var(--border-main); padding: 24px; border-radius: 20px;
             display: flex; flex-direction: column; gap: 8px; box-shadow: var(--shadow);
+            position: relative; overflow: hidden;
         }
+        .stat-card::after { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--accent); opacity: 0.5; }
+        
         .stat-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
         .stat-value { font-size: 28px; font-weight: 700; color: var(--accent); }
-        .stat-footer { font-size: 12px; color: var(--text-muted); }
+        .stat-footer { font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
 
-        .chart-container {
-            background: var(--bg-card); border: 1px solid var(--border-main); padding: 32px; border-radius: 24px;
-            width: 100%; box-shadow: var(--shadow);
+        .resource-bar { height: 6px; background: var(--border-main); border-radius: 10px; margin-top: 8px; overflow: hidden; }
+        .resource-fill { height: 100%; background: var(--accent); transition: width 1s ease-in-out; }
+
+        .dashboard-row { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+        @media (max-width: 1000px) { .dashboard-row { grid-template-columns: 1fr; } }
+
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+
+        /* Task Center */
+        .task-item {
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border-main); padding: 16px; border-radius: 16px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
         }
+        .task-info { display: flex; flex-direction: column; gap: 4px; }
+        .task-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+        .task-meta { font-size: 12px; color: var(--text-muted); }
+        .btn-kill { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-kill:hover { background: #ef4444; color: white; }
 
         /* Welcome & Chat Views */
         .welcome-view { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px; text-align: center; width: 100%; max-width: 950px; margin: 0 auto; }
@@ -140,6 +160,15 @@
         .btn-send { background: var(--accent); color: white; border: none; width: 42px; height: 42px; border-radius: 14px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
         .btn-send:hover { background: var(--accent-hover); transform: scale(1.05); }
 
+        /* Spinner */
+        .spinner-container {
+            display: none; align-items: center; gap: 12px; margin-bottom: 10px; padding: 12px 20px;
+            background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-main); width: fit-content; align-self: flex-start;
+            box-shadow: var(--shadow); animation: slideIn 0.3s ease;
+        }
+        .spin-logo { font-size: 22px; color: var(--accent); animation: spin 2s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
         #toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(100px); background: #10b981; color: white; padding: 12px 24px; border-radius: 12px; font-weight: 600; z-index: 1000; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); }
         #toast.show { transform: translateX(-50%) translateY(0); }
 
@@ -151,7 +180,7 @@
     </style>
 </head>
 <body>
-    <div id="toast"><i class="fas fa-check-circle"></i> Success</div>
+    <div id="toast">Success</div>
 
     <!-- Modal -->
     <div class="modal-overlay" id="settingsModal">
@@ -164,6 +193,13 @@
                 <label style="font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 12px;">Core Directives</label>
                 <textarea id="systemPrompt" rows="8" style="width: 100%; background: var(--bg-app); border: 1px solid var(--border-main); color: var(--text-primary); padding: 16px; border-radius: 14px; resize: none; outline: none;"></textarea>
             </div>
+            <div style="margin-bottom: 32px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <label style="font-size: 13px; color: var(--text-secondary); font-weight: 500;">Creativity Coefficient (Temperature)</label>
+                    <span style="color: var(--accent); font-weight: 600;" id="tempVal">0.7</span>
+                </div>
+                <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7" oninput="updateTempLabel(this.value)" style="width: 100%; accent-color: var(--accent); cursor: pointer;">
+            </div>
             <button style="width: 100%; background: var(--accent); color: white; border: none; padding: 14px; border-radius: 14px; font-weight: 600; cursor: pointer;" onclick="saveSettings()">Save Configuration</button>
         </div>
     </div>
@@ -173,11 +209,11 @@
         <div class="brand-header">
             <div class="brand-logo-area"><div class="brand-logo">𒆙</div><div class="brand-name">VoidClaw</div></div>
         </div>
-        <div class="nav-item active" id="navNew" onclick="showView('welcome')"><div class="history-item-content"><i class="fas fa-plus"></i> New Linkage</div></div>
-        <div class="nav-item" id="navDash" onclick="showView('dashboard')"><div class="history-item-content"><i class="fas fa-chart-pie"></i> Dashboard</div></div>
+        <div class="nav-item active" id="navNew" onclick="showView('welcome')"><div class="history-item-content"><i class="fas fa-plus"></i> Mission Hub</div></div>
+        <div class="nav-item" id="navDash" onclick="showView('dashboard')"><div class="history-item-content"><i class="fas fa-gauge-high"></i> Dashboard</div></div>
         <div class="nav-item" onclick="openSettings()"><div class="history-item-content"><i class="fas fa-sliders-h"></i> Settings</div></div>
         
-        <span class="section-label">Archive Retrieval</span>
+        <span class="section-label">Memory Vault</span>
         <div class="sidebar-section" id="historyList"></div>
     </div>
 
@@ -188,9 +224,10 @@
                 <button class="toggle-sidebar-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
                 <div id="modelStatus" style="font-size: 13px; font-weight: 500; color: var(--text-secondary);">VoidClaw Engine: <span style="color: var(--accent);">---</span></div>
             </div>
-            <div style="display: flex; align-items: center; gap: 20px;">
+            <div class="actions">
+                <button class="theme-btn" onclick="toggleTheme()"><i id="themeIcon" class="fas fa-moon"></i></button>
                 <div style="display: flex; align-items: center; gap: 10px; background: rgba(16, 185, 129, 0.1); padding: 8px 16px; border-radius: 20px;">
-                    <div style="width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></div>
+                    <div style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981;"></div>
                     <span style="font-size: 11px; font-weight: 700; color: #10b981; letter-spacing: 0.05em;">LINK STABLE</span>
                 </div>
             </div>
@@ -198,40 +235,65 @@
 
         <!-- Dashboard View -->
         <main class="dashboard-view" id="dashboardView">
-            <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 8px;">Neural Analytics</h2>
-            <p style="color: var(--text-secondary); margin-bottom: 32px;">Real-time performance metrics and cognitive activity.</p>
+            <div style="margin-bottom: 40px;">
+                <h2 style="font-size: 28px; font-weight: 700; margin-bottom: 8px;">Mission Control</h2>
+                <p style="color: var(--text-secondary);">Real-time cognitive metrics and autonomous task management.</p>
+            </div>
             
             <div class="stats-grid">
                 <div class="stat-card">
-                    <span class="stat-label">Cognitive Uptime</span>
-                    <span class="stat-value" id="statUptime">0:00:00</span>
-                    <span class="stat-footer">Since last system restart</span>
-                </div>
-                <div class="stat-card">
                     <span class="stat-label">Tokens Processed</span>
                     <span class="stat-value" id="statTokens">0</span>
-                    <span class="stat-footer">Approximate total usage</span>
+                    <div class="stat-footer">Cumulative Utilization <i class="fas fa-coins"></i></div>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-label">Active Autonomy</span>
-                    <span class="stat-value" id="statTasks">0</span>
-                    <span class="stat-footer">Scheduled background tasks</span>
+                    <span class="stat-label">Memory Uptime</span>
+                    <span class="stat-value" id="statUptime">0:00:00</span>
+                    <div class="stat-footer">Continuous Session <i class="fas fa-clock"></i></div>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-label">Neural Engine</span>
-                    <span class="stat-value" id="statEngine" style="font-size: 20px;">---</span>
-                    <span class="stat-footer" id="statProvider">--- Provider</span>
+                    <span class="stat-label">Cognitive Load (CPU)</span>
+                    <span class="stat-value" id="statCpu">0%</span>
+                    <div class="resource-bar"><div class="resource-fill" id="barCpu" style="width: 0%"></div></div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Neural RAM</span>
+                    <span class="stat-value" id="statRam">0%</span>
+                    <div class="resource-bar"><div class="resource-fill" id="barRam" style="width: 0%"></div></div>
                 </div>
             </div>
 
-            <div class="chart-container">
-                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 24px;">Cognitive Activity (Last 7 Days)</h3>
-                <canvas id="activityChart" height="100"></canvas>
+            <div class="dashboard-row">
+                <div class="chart-container">
+                    <h3 class="card-title"><i class="fas fa-chart-line" style="color: var(--accent)"></i> Cognitive Activity</h3>
+                    <canvas id="activityChart" height="120"></canvas>
+                </div>
+                <div class="stat-card">
+                    <h3 class="card-title"><i class="fas fa-folder-tree" style="color: var(--accent)"></i> Workspace Health</h3>
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <div>
+                            <span class="stat-label" style="font-size: 11px;">Storage Utilization</span>
+                            <div class="stat-value" style="font-size: 22px;" id="statWsSize">0 MB</div>
+                        </div>
+                        <div>
+                            <span class="stat-label" style="font-size: 11px;">Stored Neural Logs</span>
+                            <div class="stat-value" style="font-size: 22px;" id="statWsFiles">0 Files</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div style="background: var(--bg-card); border: 1px solid var(--border-main); padding: 32px; border-radius: 24px; box-shadow: var(--shadow);">
-                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 24px;">Connected Channels</h3>
-                <div id="channelList" style="display: flex; gap: 16px; flex-wrap: wrap;"></div>
+            <div class="dashboard-row">
+                <div class="stat-card" style="flex: 1;">
+                    <h3 class="card-title"><i class="fas fa-bolt-lightning" style="color: var(--accent)"></i> Task Command Center</h3>
+                    <div id="taskList">
+                        <p style="color: var(--text-muted); font-size: 13px;">No active autonomous tasks detected.</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <h3 class="card-title"><i class="fas fa-network-wired" style="color: var(--accent)"></i> Channels</h3>
+                    <div id="channelList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                </div>
             </div>
         </main>
 
@@ -239,10 +301,10 @@
             <div class="greeting" id="greetingText">Good morning, Commander</div>
             <div class="sub-greeting">Initiate a transmission or select an archived session.</div>
             <div class="suggestions-grid">
-                <div class="suggestion-card" onclick="useSuggestion('Summarize the top global news for today.')"><i class="fas fa-newspaper"></i><span>Daily Briefing</span></div>
-                <div class="suggestion-card" onclick="useSuggestion('Check the weather in London.')"><i class="fas fa-cloud-sun"></i><span>Weather Sync</span></div>
-                <div class="suggestion-card" onclick="useSuggestion('List the files in my workspace.')"><i class="fas fa-folder"></i><span>Files</span></div>
-                <div class="suggestion-card" onclick="useSuggestion('Remind me to drink water every hour.')"><i class="fas fa-clock"></i><span>Set Reminder</span></div>
+                <div class="suggestion-card" onclick="useSuggestion('Summarize the top global news for today.')"><i class="fas fa-newspaper" style="color:var(--accent)"></i><span>Daily Briefing</span></div>
+                <div class="suggestion-card" onclick="useSuggestion('Check the weather in London.')"><i class="fas fa-cloud-sun" style="color:var(--accent)"></i><span>Weather Sync</span></div>
+                <div class="suggestion-card" onclick="useSuggestion('List the files in my workspace.')"><i class="fas fa-folder-open" style="color:var(--accent)"></i><span>Files</span></div>
+                <div class="suggestion-card" onclick="useSuggestion('Remind me to drink water every hour.')"><i class="fas fa-clock" style="color:var(--accent)"></i><span>Set Reminder</span></div>
             </div>
         </main>
 
@@ -250,7 +312,7 @@
 
         <footer class="input-bar" id="inputArea">
             <div class="input-box">
-                <textarea id="userInput" placeholder="Neural transmission..." rows="1" oninput="autoGrow(this)" onkeydown="handleKey(event)"></textarea>
+                <textarea id="userInput" placeholder="Type a message (Shift+Enter for new line)..." rows="1" oninput="autoGrow(this)" onkeydown="handleKey(event)"></textarea>
                 <button class="btn-send" onclick="sendMessage()"><i class="fas fa-arrow-up"></i></button>
             </div>
         </footer>
@@ -262,12 +324,55 @@
         const dashboardView = document.getElementById('dashboardView');
         const userInput = document.getElementById('userInput');
         const historyList = document.getElementById('historyList');
+        const themeIcon = document.getElementById('themeIcon');
+        const systemPrompt = document.getElementById('systemPrompt');
+        const temperature = document.getElementById('temperature');
         let activityChart = null;
 
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
-        function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
+        
+        async function openSettings() { 
+            try {
+                const res = await fetch('/settings');
+                const data = await res.json();
+                systemPrompt.value = data.system_prompt || '';
+                temperature.value = data.temperature || 0.7;
+                document.getElementById('tempVal').innerText = data.temperature || 0.7;
+            } catch (e) {}
+            document.getElementById('settingsModal').style.display = 'flex'; 
+        }
+
         function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
+        function updateTempLabel(val) { document.getElementById('tempVal').innerText = val; }
         function autoGrow(element) { element.style.height = "auto"; element.style.height = (element.scrollHeight) + "px"; }
+
+        async function saveSettings() {
+            try {
+                const res = await fetch('/settings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        system_prompt: systemPrompt.value,
+                        temperature: parseFloat(temperature.value)
+                    })
+                });
+                if (res.ok) {
+                    showToast("Configuration Saved");
+                    closeSettings();
+                }
+            } catch (e) {}
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            if (body.getAttribute('data-theme') === 'light') {
+                body.setAttribute('data-theme', 'dark');
+                themeIcon.className = 'fas fa-moon';
+            } else {
+                body.setAttribute('data-theme', 'light');
+                themeIcon.className = 'fas fa-sun';
+            }
+        }
 
         function showView(view) {
             welcomeView.style.display = 'none';
@@ -298,50 +403,85 @@
                 
                 document.getElementById('statUptime').innerText = data.uptime;
                 document.getElementById('statTokens').innerText = data.total_tokens.toLocaleString();
-                document.getElementById('statTasks').innerText = data.active_tasks;
-                document.getElementById('statEngine').innerText = data.model;
-                document.getElementById('statProvider').innerText = data.provider.toUpperCase();
+                
+                // Resources
+                document.getElementById('statCpu').innerText = data.system.cpu + '%';
+                document.getElementById('barCpu').style.width = data.system.cpu + '%';
+                document.getElementById('statRam').innerText = data.system.ram + '%';
+                document.getElementById('barRam').style.width = data.system.ram + '%';
+                
+                // Workspace
+                document.getElementById('statWsSize').innerText = data.workspace.size + ' MB';
+                document.getElementById('statWsFiles').innerText = data.workspace.files + ' Files';
 
+                // Channels
                 const channelsDiv = document.getElementById('channelList');
                 channelsDiv.innerHTML = data.channels.map(c => `
-                    <div style="background: rgba(249, 115, 22, 0.1); color: var(--accent); padding: 8px 20px; border-radius: 12px; font-size: 13px; font-weight: 600; border: 1px solid rgba(249, 115, 22, 0.2);">
-                        <i class="fas fa-check-circle" style="margin-right: 8px;"></i> ${c}
+                    <div style="background: rgba(249, 115, 22, 0.05); color: var(--text-secondary); padding: 12px 16px; border-radius: 12px; font-size: 13px; border: 1px solid var(--border-main); display: flex; justify-content: space-between; align-items: center;">
+                        <span>${c}</span> <i class="fas fa-circle-check" style="color: #10b981; font-size: 10px;"></i>
                     </div>
                 `).join('');
 
+                // Tasks
+                const taskDiv = document.getElementById('taskList');
+                if (data.active_tasks.length === 0) {
+                    taskDiv.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">No active autonomous tasks detected.</p>';
+                } else {
+                    taskDiv.innerHTML = data.active_tasks.map(t => `
+                        <div class="task-item">
+                            <div class="task-info">
+                                <span class="task-name">${t.instruction.substring(0, 40)}...</span>
+                                <span class="task-meta">${t.trigger}</span>
+                            </div>
+                            <button class="btn-kill" onclick="killTask('${t.id}')">TERMINATE</button>
+                        </div>
+                    `).join('');
+                }
+
                 initChart(data.activity);
+            } catch (e) {}
+        }
+
+        async function killTask(id) {
+            if (!confirm("Stop this autonomous task?")) return;
+            try {
+                await fetch('/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ message: `SYSTEM: remove_task ID ${id}` })
+                });
+                showToast("Task Terminated");
+                updateDashboard();
             } catch (e) {}
         }
 
         function initChart(data) {
             const ctx = document.getElementById('activityChart').getContext('2d');
             if (activityChart) activityChart.destroy();
-            
             activityChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
                     datasets: [{
-                        label: 'Interactions',
-                        data: data,
-                        borderColor: '#f97316',
-                        backgroundColor: 'rgba(249, 115, 22, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        borderWidth: 3,
-                        pointRadius: 4,
-                        pointBackgroundColor: '#f97316'
+                        data: data, borderColor: '#f97316', backgroundColor: 'rgba(249, 115, 22, 0.05)',
+                        fill: true, tension: 0.4, borderWidth: 3, pointRadius: 0
                     }]
                 },
                 options: {
                     responsive: true,
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#52525b' } },
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#52525b' } },
                         x: { grid: { display: false }, ticks: { color: '#52525b' } }
                     }
                 }
             });
+        }
+
+        function showToast(msg = "Success") {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg; toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
         async function sendMessage() {
@@ -350,6 +490,17 @@
             showView('chat');
             addMessage(text, 'user');
             userInput.value = ''; userInput.style.height = "auto";
+
+            // Show Loading Indicator
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'spinner-container';
+            loadingIndicator.style.display = 'flex';
+            loadingIndicator.innerHTML = `
+                <div class="spin-logo">𒆙</div>
+                <span style="font-size: 13px; color: var(--text-secondary); font-weight: 500;" id="thinkingMsg">Processing transmission...</span>
+            `;
+            chatView.appendChild(loadingIndicator);
+            chatView.scrollTop = chatView.scrollHeight;
 
             try {
                 const response = await fetch('/chat', {
@@ -366,26 +517,39 @@
                 responseRow.className = 'msg-row msg-agent';
                 const bubble = document.createElement('div');
                 bubble.className = 'bubble';
+                bubble.style.display = 'none'; // Hidden until chunks arrive
                 responseRow.appendChild(bubble);
                 chatView.appendChild(responseRow);
 
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
+
                     const chunk = decoder.decode(value);
                     const lines = chunk.split('\n');
+                    
                     for (const line of lines) {
                         if (line.startsWith('data: ')) {
                             const data = line.slice(6);
                             if (data.startsWith('CHUNK:')) {
+                                // Hide loader and show bubble on first chunk
+                                loadingIndicator.style.display = 'none';
+                                bubble.style.display = 'block';
+                                
                                 fullResponse += data.slice(6);
                                 bubble.innerText = fullResponse;
                                 chatView.scrollTop = chatView.scrollHeight;
+                            } else if (data.startsWith('THOUGHT:')) {
+                                const msgEl = document.getElementById('thinkingMsg');
+                                if (msgEl) msgEl.innerText = data.slice(8);
                             }
                         }
                     }
                 }
-            } catch (e) { addMessage("FAULT DETECTED.", 'agent'); }
+            } catch (e) { 
+                loadingIndicator.style.display = 'none';
+                addMessage("CRITICAL TRANSMISSION FAULT.", 'agent'); 
+            }
         }
 
         function addMessage(text, role) {
@@ -396,6 +560,38 @@
             chatView.scrollTop = chatView.scrollHeight;
         }
 
+        async function loadChatDetail(filename) {
+            showView('chat');
+            chatView.innerHTML = '<div class="msg-row msg-agent"><div class="bubble">Restoring neural logs...</div></div>';
+            
+            try {
+                const res = await fetch(`/chat-detail/${filename}`);
+                const data = await res.json();
+                chatView.innerHTML = '';
+                
+                const blocks = data.content.split('### [');
+                blocks.forEach(block => {
+                    if (!block.trim()) return;
+                    const lines = block.split('\n');
+                    const headerLine = lines[0];
+                    const role = headerLine.includes('USER') ? 'user' : 'agent';
+                    const messageContent = lines.slice(1).join('\n').trim();
+                    if (messageContent && !headerLine.includes('THOUGHT') && !headerLine.includes('ACTION') && !headerLine.includes('OBSERVATION')) {
+                        addMessage(messageContent, role);
+                    }
+                });
+            } catch (e) { addMessage('Failed to retrieve logs.', 'agent'); }
+        }
+
+        async function deleteSession(e, filename) {
+            e.stopPropagation();
+            if (!confirm("Delete this neural log?")) return;
+            try {
+                const res = await fetch(`/delete-session/${filename}`, { method: 'DELETE' });
+                if (res.ok) init();
+            } catch (e) { alert("Delete failed."); }
+        }
+
         async function init() {
             try {
                 const sRes = await fetch('/status');
@@ -404,11 +600,25 @@
                 
                 const hRes = await fetch('/history');
                 const hData = await hRes.json();
-                historyList.innerHTML = hData.map(f => `
-                    <div class="nav-item" onclick="loadChatDetail('${f}')">
-                        <div class="history-item-content"><i class="far fa-message"></i> <span>${f.replace('.md', '').replace('session_', '')}</span></div>
-                    </div>
-                `).join('');
+                
+                historyList.innerHTML = '';
+                for(const file of hData) {
+                    const detailRes = await fetch(`/chat-detail/${file}`);
+                    const detailData = await detailRes.json();
+                    
+                    let snippet = file.replace('.md', '').replace('session_', '');
+                    const match = detailData.content.match(/### \[.*?\] USER.*?\n(.*?)\n/);
+                    if (match && match[1]) snippet = match[1].substring(0, 30) + (match[1].length > 30 ? '...' : '');
+
+                    const item = document.createElement('div');
+                    item.className = 'nav-item';
+                    item.onclick = () => loadChatDetail(file);
+                    item.innerHTML = `
+                        <div class="history-item-content"><i class="far fa-message"></i> <span>${snippet}</span></div>
+                        <i class="fas fa-trash-alt delete-chat" onclick="deleteSession(event, '${file}')" style="font-size: 12px; opacity: 0.5;"></i>
+                    `;
+                    historyList.appendChild(item);
+                }
             } catch (e) {}
         }
 
@@ -422,13 +632,12 @@
             if (data.content) {
                 if (chatView.style.display === 'flex') addMessage(data.content, 'agent');
                 else {
-                    const toast = document.getElementById('toast');
-                    toast.innerHTML = `<i class="fas fa-bell"></i> ${data.content.substring(0, 40)}...`;
-                    toast.classList.add('show');
-                    setTimeout(() => toast.classList.remove('show'), 5000);
+                    showToast("🔔 Reminder triggered");
                 }
             }
         };
+
+        function useSuggestion(text) { userInput.value = text; autoGrow(userInput); sendMessage(); }
 
         init();
     </script>

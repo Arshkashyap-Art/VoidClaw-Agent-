@@ -59,17 +59,34 @@ def upload_file():
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         return jsonify({'message': f'File {filename} uploaded to workspace.'})
 
-@app.route('/settings', methods=['POST'])
-def update_settings():
+@app.route('/settings', methods=['GET', 'POST'])
+def handle_settings():
+    if request.method == 'GET':
+        return jsonify(agent.get_settings())
+    
     data = request.json
     new_prompt = data.get('system_prompt')
-    if new_prompt:
+    new_temp = data.get('temperature')
+    
+    if new_prompt is not None:
         user_md_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'common', 'user.md')
         with open(user_md_path, 'w', encoding='utf-8') as f:
             f.write(new_prompt)
-        agent.reload_config()
-        return jsonify({'message': 'System prompt updated.'})
-    return jsonify({'error': 'No data provided'}), 400
+            
+    if new_temp is not None:
+        config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'common', 'config.yaml')
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+        
+        provider = config.get('default_provider', 'ollama')
+        if provider in config:
+            config[provider]['temperature'] = float(new_temp)
+            
+        with open(config_path, 'w') as f:
+            yaml.dump(config, f)
+            
+    agent.reload_config()
+    return jsonify({'message': 'Settings updated successfully.'})
 
 @app.route('/history', methods=['GET'])
 def history():
