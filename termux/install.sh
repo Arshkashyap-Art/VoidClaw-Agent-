@@ -20,11 +20,12 @@ echo -e "${CYAN}================================================================
 echo -e "${BLUE}[*] Updating system packages...${NC}"
 pkg update -y && pkg upgrade -y
 pkg install -y x11-repo tur-repo
+pkg update -y
 
 echo -e "${BLUE}[*] Installing dependencies (Python, Git, Build Tools, Math Libs)...${NC}"
-pkg install -y python git clang libyaml make cmake openblas ninja
+pkg install -y python git clang libyaml make cmake openblas ninja rust ffmpeg
 # Optional but recommended for faster numpy/scikit-learn installs on termux:
-pkg install -y python-numpy python-scikit-learn python-yaml
+pkg install -y python-numpy python-scikit-learn python-pyyaml
 
 # 2. Virtual Environment
 echo -e "${BLUE}[*] Setting up Python virtual environment...${NC}"
