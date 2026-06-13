@@ -4,6 +4,7 @@ import json
 import logging
 import asyncio
 import webbrowser
+import queue
 from flask import Flask, request, jsonify, send_from_directory, Response
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -12,9 +13,9 @@ from waitress import serve
 app = Flask(__name__, static_folder='web')
 CORS(app)
 
-# Global agent instance and notification queue
+# Global agent instance and thread-safe notification queue
 agent = None
-notification_queue = asyncio.Queue()
+notification_queue = queue.Queue()
 
 # Configure upload folder
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'workspace')
@@ -104,22 +105,19 @@ def new_session():
 @app.route('/notifications')
 def notifications():
     def stream():
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
         while True:
             try:
-                # We use a small timeout to allow checking for disconnects
-                msg = loop.run_until_complete(notification_queue.get())
+                # Block for 20s to wait for message, then send keep-alive
+                msg = notification_queue.get(timeout=20)
                 yield f"data: {json.dumps(msg)}\n\n"
+            except queue.Empty:
+                yield ": keep-alive\n\n"
             except:
                 break
     return Response(stream(), mimetype='text/event-stream')
 
 def push_notification(content):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(notification_queue.put({'content': content}))
-    loop.close()
+    notification_queue.put({'content': content})
 
 @app.route('/delete-session/<filename>', methods=['DELETE'])
 def delete_session(filename):
