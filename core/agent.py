@@ -40,6 +40,8 @@ class VoidClawAgent:
         self.system_prompt = self._load_system_prompt()
         self.history = [] 
         self.session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.start_time = datetime.now()
+        self.total_tokens = 0
 
         # Scheduler
         self.scheduler = AsyncIOScheduler()
@@ -70,6 +72,30 @@ class VoidClawAgent:
         self.history = []
         self.session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
         return "Session reset. Memory cleared."
+
+    def get_dashboard_stats(self):
+        uptime = str(datetime.now() - self.start_time).split('.')[0]
+        active_tasks = len(self.scheduler.get_jobs())
+        
+        # Calculate weekly activity (count files in chats dir per day of week)
+        activity_data = [0] * 7
+        try:
+            for f in os.listdir(self.chats_dir):
+                if f.endswith('.md'):
+                    stats = os.stat(os.path.join(self.chats_dir, f))
+                    day_idx = datetime.fromtimestamp(stats.st_mtime).weekday()
+                    activity_data[day_idx] += 1
+        except: pass
+
+        return {
+            "uptime": uptime,
+            "total_tokens": self.total_tokens,
+            "active_tasks": active_tasks,
+            "activity": activity_data,
+            "provider": self.config['default_provider'],
+            "model": self.config[self.config['default_provider']]['model'],
+            "channels": ["Terminal", "Web UI"] + (["Telegram"] if self.tg_app else [])
+        }
 
     def _load_tasks(self):
         if os.path.exists(self.tasks_path):
@@ -233,9 +259,10 @@ Respond normally for final answers.
             print(f"\n{self.AMBER}{self.BOLD}{prefix}{self.RESET} {self.DIM}»{self.RESET} {user_input}")
             self.log_chat(f"USER ({source})", user_input)
             self.history.append({"role": "user", "content": user_input})
-        
-        # Limit history context to prevent loops
-        context_history = self.history[-10:] if source != "AUTO" else []
+            self.total_tokens += len(user_input) // 4
+
+            context_history = self.history[-10:] if source != "AUTO" else []
+
         context = "\n".join([f"{m['role']}: {m['content']}" for m in context_history])
         if source == "AUTO":
             context = f"SYSTEM: {user_input}"

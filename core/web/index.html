@@ -6,6 +6,7 @@
     <title>VoidClaw | Command Center</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --accent: #f97316;
@@ -54,11 +55,7 @@
             width: var(--sidebar-width);
             background-color: var(--bg-sidebar);
             border-right: 1px solid var(--border-main);
-            display: flex;
-            flex-direction: column;
-            padding: 24px 16px;
-            flex-shrink: 0;
-            z-index: 20;
+            display: flex; flex-direction: column; padding: 24px 16px; flex-shrink: 0; z-index: 20;
             transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .sidebar.collapsed { margin-left: calc(var(--sidebar-width) * -1); }
@@ -75,15 +72,8 @@
         .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 16px; margin-top: 32px; letter-spacing: 0.05em; display: block; padding: 0 8px; }
 
         .nav-item {
-            padding: 12px 14px;
-            border-radius: 12px;
-            font-size: 14px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            display: flex;
-            align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; transition: 0.2s ease;
-            position: relative;
-            overflow: hidden;
+            padding: 12px 14px; border-radius: 12px; font-size: 14px; color: var(--text-secondary);
+            cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; transition: 0.2s ease;
         }
         .nav-item:hover { background: rgba(249, 115, 22, 0.08); color: var(--accent); }
         .nav-item.active { background: rgba(249, 115, 22, 0.12); color: var(--accent); font-weight: 500; }
@@ -97,12 +87,9 @@
         .workspace { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; transition: width 0.3s ease; }
 
         .top-nav {
-            padding: 16px 32px;
-            border-bottom: 1px solid var(--border-main);
+            padding: 16px 32px; border-bottom: 1px solid var(--border-main);
             display: flex; justify-content: space-between; align-items: center;
-            background: var(--glass);
-            backdrop-filter: blur(16px);
-            z-index: 10;
+            background: var(--glass); backdrop-filter: blur(16px); z-index: 10;
         }
 
         .toggle-sidebar-btn {
@@ -111,89 +98,60 @@
         }
         .toggle-sidebar-btn:hover { color: var(--accent); border-color: var(--accent); background: rgba(249, 115, 22, 0.05); }
 
-        .actions { display: flex; gap: 20px; align-items: center; }
-        .theme-btn { cursor: pointer; color: var(--text-secondary); font-size: 20px; transition: 0.2s; }
-
-        /* Welcome & Suggestions */
-        .welcome-view {
-            flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
-            padding: 40px; text-align: center; width: 100%; max-width: 950px; margin: 0 auto;
+        /* Dashboard View */
+        .dashboard-view {
+            flex: 1; padding: 40px; overflow-y: auto; display: none; flex-direction: column; gap: 32px;
+            width: 100%; max-width: 1200px; margin: 0 auto; animation: fadeIn 0.4s ease;
         }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; }
+        .stat-card {
+            background: var(--bg-card); border: 1px solid var(--border-main); padding: 24px; border-radius: 20px;
+            display: flex; flex-direction: column; gap: 8px; box-shadow: var(--shadow);
+        }
+        .stat-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-value { font-size: 28px; font-weight: 700; color: var(--accent); }
+        .stat-footer { font-size: 12px; color: var(--text-muted); }
+
+        .chart-container {
+            background: var(--bg-card); border: 1px solid var(--border-main); padding: 32px; border-radius: 24px;
+            width: 100%; box-shadow: var(--shadow);
+        }
+
+        /* Welcome & Chat Views */
+        .welcome-view { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px; text-align: center; width: 100%; max-width: 950px; margin: 0 auto; }
         .greeting { font-size: 36px; font-weight: 700; margin-bottom: 16px; background: linear-gradient(135deg, var(--accent), #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .sub-greeting { color: var(--text-secondary); margin-bottom: 48px; font-size: 18px; max-width: 500px; }
         .suggestions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; width: 100%; }
-        .suggestion-card { background: var(--bg-card); border: 1px solid var(--border-main); padding: 24px; border-radius: 18px; cursor: pointer; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); text-align: left; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .suggestion-card:hover { border-color: var(--accent); background: rgba(249, 115, 22, 0.05); transform: translateY(-6px); box-shadow: 0 12px 24px rgba(0,0,0,0.2); }
-        .suggestion-card i { color: var(--accent); font-size: 20px; }
-        .suggestion-card span { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+        .suggestion-card { background: var(--bg-card); border: 1px solid var(--border-main); padding: 24px; border-radius: 18px; cursor: pointer; transition: 0.3s ease; text-align: left; display: flex; flex-direction: column; gap: 12px; }
+        .suggestion-card:hover { border-color: var(--accent); transform: translateY(-6px); }
 
-        /* Chat View */
-        .chat-view {
-            flex: 1; padding: 40px 20px; overflow-y: auto; overflow-x: hidden;
-            display: none; flex-direction: column; gap: 32px;
-            width: 100%; align-items: center;
-        }
-        .chat-view::-webkit-scrollbar { width: 6px; }
-        .chat-view::-webkit-scrollbar-thumb { background: var(--border-main); border-radius: 10px; }
-
-        .msg-row { display: flex; flex-direction: column; width: 100%; max-width: 850px; animation: slideIn 0.4s cubic-bezier(0, 0, 0.2, 1); }
-        @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        
+        .chat-view { flex: 1; padding: 40px 20px; overflow-y: auto; display: none; flex-direction: column; gap: 32px; width: 100%; align-items: center; }
+        .msg-row { display: flex; flex-direction: column; width: 100%; max-width: 850px; animation: slideIn 0.4s ease; }
         .msg-user { align-items: flex-end; }
         .msg-agent { align-items: flex-start; }
         .bubble { max-width: 85%; padding: 18px 24px; border-radius: 20px; font-size: 15.5px; line-height: 1.6; box-shadow: var(--shadow); word-wrap: break-word; white-space: pre-wrap; }
         .msg-user .bubble { background: var(--accent); color: white; border-bottom-right-radius: 4px; }
         .msg-agent .bubble { background: var(--msg-agent); border: 1px solid var(--border-main); color: var(--text-primary); border-bottom-left-radius: 4px; }
 
-        /* Modal Settings */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(12px); animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .modal-content { background: var(--bg-card); width: 95%; max-width: 550px; padding: 40px; border-radius: 24px; border: 1px solid var(--border-main); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-
-        /* Input Bar */
+        /* Input & UI elements */
         .input-bar { padding: 32px; max-width: 900px; margin: 0 auto; width: 100%; }
-        .input-box { 
-            background: var(--bg-sidebar); border: 1px solid var(--border-main); border-radius: 20px; padding: 8px 16px; 
-            display: flex; align-items: flex-end; gap: 12px; box-shadow: var(--shadow); transition: 0.3s;
-            max-height: 200px;
-        }
-        .input-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1); }
-        
-        .input-box textarea { 
-            flex: 1; background: transparent; border: none; padding: 12px 0; color: var(--text-primary); 
-            outline: none; font-size: 16px; font-family: inherit; resize: none; max-height: 180px; line-height: 1.5;
-        }
-        .input-box textarea::-webkit-scrollbar { width: 4px; }
-        .input-box textarea::-webkit-scrollbar-thumb { background: var(--border-main); border-radius: 10px; }
-
-        .input-actions { display: flex; align-items: center; gap: 8px; padding-bottom: 8px; }
-        .icon-btn { color: var(--text-muted); cursor: pointer; padding: 10px; border-radius: 12px; transition: 0.2s; font-size: 18px; }
-        .icon-btn:hover { color: var(--accent); background: rgba(249, 115, 22, 0.08); }
-
-        .btn-send { background: var(--accent); color: white; border: none; width: 42px; height: 42px; border-radius: 14px; font-size: 16px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+        .input-box { background: var(--bg-sidebar); border: 1px solid var(--border-main); border-radius: 20px; padding: 8px 16px; display: flex; align-items: flex-end; gap: 12px; box-shadow: var(--shadow); transition: 0.3s; }
+        .input-box textarea { flex: 1; background: transparent; border: none; padding: 12px 0; color: var(--text-primary); outline: none; font-size: 16px; font-family: inherit; resize: none; max-height: 180px; }
+        .btn-send { background: var(--accent); color: white; border: none; width: 42px; height: 42px; border-radius: 14px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
         .btn-send:hover { background: var(--accent-hover); transform: scale(1.05); }
-        .btn-send:active { transform: scale(0.95); }
 
-        /* Spinner */
-        .spinner-container {
-            display: none; align-items: center; gap: 12px; margin-bottom: 10px; padding: 12px 20px;
-            background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-main); width: fit-content; align-self: flex-start;
-        }
-        .spin-logo { font-size: 22px; color: var(--accent); animation: spin 2s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        /* Toast */
-        #toast {
-            position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(100px);
-            background: #10b981; color: white; padding: 12px 24px; border-radius: 12px;
-            font-weight: 600; font-size: 14px; z-index: 1000; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
-        }
+        #toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(100px); background: #10b981; color: white; padding: 12px 24px; border-radius: 12px; font-weight: 600; z-index: 1000; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); }
         #toast.show { transform: translateX(-50%) translateY(0); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(12px); }
+        .modal-content { background: var(--bg-card); width: 95%; max-width: 550px; padding: 40px; border-radius: 24px; border: 1px solid var(--border-main); }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body>
-    <div id="toast"><i class="fas fa-check-circle"></i> Changes applied successfully</div>
+    <div id="toast"><i class="fas fa-check-circle"></i> Success</div>
 
     <!-- Modal -->
     <div class="modal-overlay" id="settingsModal">
@@ -203,17 +161,10 @@
                 <i class="fas fa-times" onclick="closeSettings()" style="cursor:pointer; color: var(--text-muted); padding: 8px;"></i>
             </div>
             <div style="margin-bottom: 24px;">
-                <label style="font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 12px; font-weight: 500;">Core Directives (System Prompt)</label>
-                <textarea id="systemPrompt" rows="8" style="width: 100%; background: var(--bg-app); border: 1px solid var(--border-main); color: var(--text-primary); padding: 16px; border-radius: 14px; resize: none; font-size: 14px; line-height: 1.5; outline: none; transition: 0.2s;"></textarea>
+                <label style="font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 12px;">Core Directives</label>
+                <textarea id="systemPrompt" rows="8" style="width: 100%; background: var(--bg-app); border: 1px solid var(--border-main); color: var(--text-primary); padding: 16px; border-radius: 14px; resize: none; outline: none;"></textarea>
             </div>
-            <div style="margin-bottom: 32px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                    <label style="font-size: 13px; color: var(--text-secondary); font-weight: 500;">Creativity Coefficient (Temperature)</label>
-                    <span style="color: var(--accent); font-weight: 600;" id="tempVal">0.7</span>
-                </div>
-                <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7" oninput="updateTempLabel(this.value)" style="width: 100%; accent-color: var(--accent); cursor: pointer;">
-            </div>
-            <button class="btn-primary" style="width: 100%; background: var(--accent); color: white; border: none; padding: 14px; border-radius: 14px; font-weight: 600; cursor: pointer; transition: 0.2s;" onclick="saveSettings()">Save Configuration</button>
+            <button style="width: 100%; background: var(--accent); color: white; border: none; padding: 14px; border-radius: 14px; font-weight: 600; cursor: pointer;" onclick="saveSettings()">Save Configuration</button>
         </div>
     </div>
 
@@ -222,7 +173,8 @@
         <div class="brand-header">
             <div class="brand-logo-area"><div class="brand-logo">𒆙</div><div class="brand-name">VoidClaw</div></div>
         </div>
-        <div class="nav-item active" onclick="initNewSession()"><div class="history-item-content"><i class="fas fa-plus"></i> New Session</div></div>
+        <div class="nav-item active" id="navNew" onclick="showView('welcome')"><div class="history-item-content"><i class="fas fa-plus"></i> New Linkage</div></div>
+        <div class="nav-item" id="navDash" onclick="showView('dashboard')"><div class="history-item-content"><i class="fas fa-chart-pie"></i> Dashboard</div></div>
         <div class="nav-item" onclick="openSettings()"><div class="history-item-content"><i class="fas fa-sliders-h"></i> Settings</div></div>
         
         <span class="section-label">Archive Retrieval</span>
@@ -234,42 +186,71 @@
         <header class="top-nav">
             <div style="display: flex; align-items: center; gap: 24px;">
                 <button class="toggle-sidebar-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-                <div id="modelStatus" style="font-size: 13px; font-weight: 500; color: var(--text-secondary);">Core Engine: <span style="color: var(--accent);">---</span></div>
+                <div id="modelStatus" style="font-size: 13px; font-weight: 500; color: var(--text-secondary);">VoidClaw Engine: <span style="color: var(--accent);">---</span></div>
             </div>
-            <div class="actions">
-                <div class="theme-btn" onclick="toggleTheme()"><i id="themeIcon" class="fas fa-moon"></i></div>
+            <div style="display: flex; align-items: center; gap: 20px;">
                 <div style="display: flex; align-items: center; gap: 10px; background: rgba(16, 185, 129, 0.1); padding: 8px 16px; border-radius: 20px;">
-                    <div style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981;"></div>
-                    <span style="font-size: 11px; font-weight: 700; color: #10b981; letter-spacing: 0.05em;">READY</span>
+                    <div style="width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></div>
+                    <span style="font-size: 11px; font-weight: 700; color: #10b981; letter-spacing: 0.05em;">LINK STABLE</span>
                 </div>
             </div>
         </header>
 
+        <!-- Dashboard View -->
+        <main class="dashboard-view" id="dashboardView">
+            <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 8px;">Neural Analytics</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 32px;">Real-time performance metrics and cognitive activity.</p>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-label">Cognitive Uptime</span>
+                    <span class="stat-value" id="statUptime">0:00:00</span>
+                    <span class="stat-footer">Since last system restart</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Tokens Processed</span>
+                    <span class="stat-value" id="statTokens">0</span>
+                    <span class="stat-footer">Approximate total usage</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Active Autonomy</span>
+                    <span class="stat-value" id="statTasks">0</span>
+                    <span class="stat-footer">Scheduled background tasks</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Neural Engine</span>
+                    <span class="stat-value" id="statEngine" style="font-size: 20px;">---</span>
+                    <span class="stat-footer" id="statProvider">--- Provider</span>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 24px;">Cognitive Activity (Last 7 Days)</h3>
+                <canvas id="activityChart" height="100"></canvas>
+            </div>
+
+            <div style="background: var(--bg-card); border: 1px solid var(--border-main); padding: 32px; border-radius: 24px; box-shadow: var(--shadow);">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 24px;">Connected Channels</h3>
+                <div id="channelList" style="display: flex; gap: 16px; flex-wrap: wrap;"></div>
+            </div>
+        </main>
+
         <main class="welcome-view" id="welcomeView">
             <div class="greeting" id="greetingText">Good morning, Commander</div>
-            <div class="sub-greeting">Initiate a transmission or select an archived session to begin neural linkage.</div>
+            <div class="sub-greeting">Initiate a transmission or select an archived session.</div>
             <div class="suggestions-grid">
-                <div class="suggestion-card" onclick="useSuggestion('Plan a 10-day trip to Japan with a focus on tech and tradition.')"><i class="fas fa-plane"></i><span>Plan a Trip</span></div>
-                <div class="suggestion-card" onclick="useSuggestion('Search for the latest breakthroughs in autonomous AI agents from this week.')"><i class="fas fa-search"></i><span>Latest AI News</span></div>
-                <div class="suggestion-card" onclick="useSuggestion('Create a project structure for a Python-based automation tool.')"><i class="fas fa-code"></i><span>Code Architecture</span></div>
-                <div class="suggestion-card" onclick="useSuggestion('List all files in my workspace and summarize their contents.')"><i class="fas fa-folder-open"></i><span>Workspace Insight</span></div>
+                <div class="suggestion-card" onclick="useSuggestion('Summarize the top global news for today.')"><i class="fas fa-newspaper"></i><span>Daily Briefing</span></div>
+                <div class="suggestion-card" onclick="useSuggestion('Check the weather in London.')"><i class="fas fa-cloud-sun"></i><span>Weather Sync</span></div>
+                <div class="suggestion-card" onclick="useSuggestion('List the files in my workspace.')"><i class="fas fa-folder"></i><span>Files</span></div>
+                <div class="suggestion-card" onclick="useSuggestion('Remind me to drink water every hour.')"><i class="fas fa-clock"></i><span>Set Reminder</span></div>
             </div>
         </main>
 
         <main class="chat-view" id="chatView"></main>
 
-        <div class="spinner-container" id="loadingIndicator">
-            <div class="spin-logo">𒆙</div>
-            <span style="font-size: 13px; color: var(--text-secondary); font-weight: 500;">Processing...</span>
-        </div>
-
-        <footer class="input-bar">
+        <footer class="input-bar" id="inputArea">
             <div class="input-box">
-                <div class="input-actions">
-                    <label for="fileInput" class="icon-btn"><i class="fas fa-paperclip"></i></label>
-                    <input type="file" id="fileInput" onchange="handleFileUpload(this)" style="display:none">
-                </div>
-                <textarea id="userInput" placeholder="Type a message (Shift + Enter for new line)..." rows="1" oninput="autoGrow(this)" onkeydown="handleKey(event)"></textarea>
+                <textarea id="userInput" placeholder="Neural transmission..." rows="1" oninput="autoGrow(this)" onkeydown="handleKey(event)"></textarea>
                 <button class="btn-send" onclick="sendMessage()"><i class="fas fa-arrow-up"></i></button>
             </div>
         </footer>
@@ -278,119 +259,97 @@
     <script>
         const chatView = document.getElementById('chatView');
         const welcomeView = document.getElementById('welcomeView');
+        const dashboardView = document.getElementById('dashboardView');
         const userInput = document.getElementById('userInput');
-        const themeIcon = document.getElementById('themeIcon');
-        const systemPrompt = document.getElementById('systemPrompt');
-        const temperature = document.getElementById('temperature');
         const historyList = document.getElementById('historyList');
-        const loadingIndicator = document.getElementById('loadingIndicator');
+        let activityChart = null;
 
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
         function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
         function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
-        function updateTempLabel(val) { document.getElementById('tempVal').innerText = val; }
+        function autoGrow(element) { element.style.height = "auto"; element.style.height = (element.scrollHeight) + "px"; }
 
-        function showToast() {
-            const toast = document.getElementById('toast');
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
+        function showView(view) {
+            welcomeView.style.display = 'none';
+            chatView.style.display = 'none';
+            dashboardView.style.display = 'none';
+            document.getElementById('inputArea').style.display = 'block';
+            
+            document.getElementById('navNew').classList.remove('active');
+            document.getElementById('navDash').classList.remove('active');
+
+            if (view === 'welcome') {
+                welcomeView.style.display = 'flex';
+                document.getElementById('navNew').classList.add('active');
+            } else if (view === 'chat') {
+                chatView.style.display = 'flex';
+            } else if (view === 'dashboard') {
+                dashboardView.style.display = 'flex';
+                document.getElementById('inputArea').style.display = 'none';
+                document.getElementById('navDash').classList.add('active');
+                updateDashboard();
+            }
         }
 
-        async function saveSettings() {
+        async function updateDashboard() {
             try {
-                const res = await fetch('/settings', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ system_prompt: systemPrompt.value })
-                });
-                if (res.ok) {
-                    showToast();
-                    closeSettings();
-                }
+                const res = await fetch('/dashboard-stats');
+                const data = await res.json();
+                
+                document.getElementById('statUptime').innerText = data.uptime;
+                document.getElementById('statTokens').innerText = data.total_tokens.toLocaleString();
+                document.getElementById('statTasks').innerText = data.active_tasks;
+                document.getElementById('statEngine').innerText = data.model;
+                document.getElementById('statProvider').innerText = data.provider.toUpperCase();
+
+                const channelsDiv = document.getElementById('channelList');
+                channelsDiv.innerHTML = data.channels.map(c => `
+                    <div style="background: rgba(249, 115, 22, 0.1); color: var(--accent); padding: 8px 20px; border-radius: 12px; font-size: 13px; font-weight: 600; border: 1px solid rgba(249, 115, 22, 0.2);">
+                        <i class="fas fa-check-circle" style="margin-right: 8px;"></i> ${c}
+                    </div>
+                `).join('');
+
+                initChart(data.activity);
             } catch (e) {}
         }
 
-        function autoGrow(element) {
-            element.style.height = "auto";
-            element.style.height = (element.scrollHeight) + "px";
-        }
-
-        function toggleTheme() {
-            const body = document.body;
-            if (body.getAttribute('data-theme') === 'light') {
-                body.setAttribute('data-theme', 'dark');
-                themeIcon.className = 'fas fa-moon';
-            } else {
-                body.setAttribute('data-theme', 'light');
-                themeIcon.className = 'fas fa-sun';
-            }
-        }
-
-        async function initNewSession() {
-            await fetch('/new-session', { method: 'POST' });
-            window.location.reload();
-        }
-
-        async function deleteSession(e, filename) {
-            e.stopPropagation();
-            if (!confirm("Confirm permanent deletion of this archive?")) return;
-            try {
-                const res = await fetch(`/delete-session/${filename}`, { method: 'DELETE' });
-                if (res.ok) {
-                    init(); // Refresh history list
-                }
-            } catch (e) {
-                alert("Failed to delete session.");
-            }
-        }
-
-        async function loadChatDetail(filename) {
-            welcomeView.style.display = 'none';
-            chatView.style.display = 'flex';
-            chatView.innerHTML = '<div class="msg-row msg-agent"><div class="bubble">Restoring session history...</div></div>';
+        function initChart(data) {
+            const ctx = document.getElementById('activityChart').getContext('2d');
+            if (activityChart) activityChart.destroy();
             
-            try {
-                const res = await fetch(`/chat-detail/${filename}`);
-                const data = await res.json();
-                chatView.innerHTML = '';
-                
-                const blocks = data.content.split('### [');
-                blocks.forEach(block => {
-                    if (!block.trim()) return;
-                    const lines = block.split('\n');
-                    const headerLine = lines[0];
-                    const role = headerLine.includes('USER') ? 'user' : 'agent';
-                    const messageContent = lines.slice(1).join('\n').trim();
-                    if (messageContent && !headerLine.includes('THOUGHT') && !headerLine.includes('ACTION') && !headerLine.includes('OBSERVATION')) {
-                        addMessage(messageContent, role);
+            activityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Interactions',
+                        data: data,
+                        borderColor: '#f97316',
+                        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#f97316'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#52525b' } },
+                        x: { grid: { display: false }, ticks: { color: '#52525b' } }
                     }
-                });
-            } catch (e) { addMessage('Failed to load archive.', 'agent'); }
+                }
+            });
         }
 
         async function sendMessage() {
             const text = userInput.value.trim();
             if (!text) return;
-            
-            welcomeView.style.display = 'none';
-            chatView.style.display = 'flex';
+            showView('chat');
             addMessage(text, 'user');
-            userInput.value = '';
-            userInput.style.height = "auto";
-
-            const loadingMessages = ["Processing transmission...", "Synthesizing response...", "Aligning logic matrices...", "Thinking..."];
-            loadingIndicator.querySelector('span').innerText = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
-            loadingIndicator.style.display = 'flex';
-            chatView.appendChild(loadingIndicator);
-            chatView.scrollTop = chatView.scrollHeight;
-
-            const responseRow = document.createElement('div');
-            responseRow.className = 'msg-row msg-agent';
-            const bubble = document.createElement('div');
-            bubble.className = 'bubble';
-            bubble.style.display = 'none';
-            responseRow.appendChild(bubble);
-            chatView.appendChild(responseRow);
+            userInput.value = ''; userInput.style.height = "auto";
 
             try {
                 const response = await fetch('/chat', {
@@ -402,34 +361,31 @@
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let fullResponse = "";
+                
+                const responseRow = document.createElement('div');
+                responseRow.className = 'msg-row msg-agent';
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                responseRow.appendChild(bubble);
+                chatView.appendChild(responseRow);
 
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
-
                     const chunk = decoder.decode(value);
                     const lines = chunk.split('\n');
-                    
                     for (const line of lines) {
                         if (line.startsWith('data: ')) {
                             const data = line.slice(6);
                             if (data.startsWith('CHUNK:')) {
-                                loadingIndicator.style.display = 'none';
-                                bubble.style.display = 'block';
                                 fullResponse += data.slice(6);
                                 bubble.innerText = fullResponse;
                                 chatView.scrollTop = chatView.scrollHeight;
-                            } else if (data.startsWith('THOUGHT:')) {
-                                loadingIndicator.querySelector('span').innerText = data.slice(8);
                             }
                         }
                     }
                 }
-            } catch (e) { 
-                loadingIndicator.style.display = 'none';
-                bubble.style.display = 'block';
-                bubble.innerText = "CRITICAL FAULT IN NEURAL LINK."; 
-            }
+            } catch (e) { addMessage("FAULT DETECTED.", 'agent'); }
         }
 
         function addMessage(text, role) {
@@ -440,12 +396,7 @@
             chatView.scrollTop = chatView.scrollHeight;
         }
 
-        function useSuggestion(text) { userInput.value = text; autoGrow(userInput); sendMessage(); }
-
         async function init() {
-            const hour = new Date().getHours();
-            document.getElementById('greetingText').innerText = `${hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'}, Commander`;
-
             try {
                 const sRes = await fetch('/status');
                 const sData = await sRes.json();
@@ -453,43 +404,29 @@
                 
                 const hRes = await fetch('/history');
                 const hData = await hRes.json();
-                
-                historyList.innerHTML = '';
-                for(const file of hData) {
-                    const detailRes = await fetch(`/chat-detail/${file}`);
-                    const detailData = await detailRes.json();
-                    
-                    // Extract first user message for snippet
-                    let snippet = file.replace('.md', '').replace('session_', '');
-                    const match = detailData.content.match(/### \[.*?\] USER.*?\n(.*?)\n/);
-                    if (match && match[1]) snippet = match[1].substring(0, 30) + (match[1].length > 30 ? '...' : '');
-
-                    const item = document.createElement('div');
-                    item.className = 'nav-item';
-                    item.onclick = () => loadChatDetail(file);
-                    item.innerHTML = `
-                        <div class="history-item-content"><i class="far fa-message"></i> <span>${snippet}</span></div>
-                        <i class="fas fa-trash-alt delete-chat" onclick="deleteSession(event, '${file}')"></i>
-                    `;
-                    historyList.appendChild(item);
-                }
+                historyList.innerHTML = hData.map(f => `
+                    <div class="nav-item" onclick="loadChatDetail('${f}')">
+                        <div class="history-item-content"><i class="far fa-message"></i> <span>${f.replace('.md', '').replace('session_', '')}</span></div>
+                    </div>
+                `).join('');
             } catch (e) {}
         }
 
-        function handleKey(e) { 
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage(); 
-            }
-        }
-
-        // Notification Listener
+        function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+        
+        // Notifications
         const eventSource = new EventSource('/notifications');
-        eventSource.onmessage = function(e) {
+        eventSource.onmessage = (e) => {
+            if (e.data === 'keep-alive') return;
             const data = JSON.parse(e.data);
             if (data.content) {
-                addMessage(data.content, 'agent');
-                // Play notification sound if needed
+                if (chatView.style.display === 'flex') addMessage(data.content, 'agent');
+                else {
+                    const toast = document.getElementById('toast');
+                    toast.innerHTML = `<i class="fas fa-bell"></i> ${data.content.substring(0, 40)}...`;
+                    toast.classList.add('show');
+                    setTimeout(() => toast.classList.remove('show'), 5000);
+                }
             }
         };
 

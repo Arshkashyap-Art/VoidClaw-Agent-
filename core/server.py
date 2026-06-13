@@ -97,6 +97,10 @@ def status():
         'channels': ['Terminal', 'Web UI'] + (['Telegram'] if agent.config.get('telegram_token') != "YOUR_TELEGRAM_BOT_TOKEN" else [])
     })
 
+@app.route('/dashboard-stats', methods=['GET'])
+def dashboard_stats():
+    return jsonify(agent.get_dashboard_stats())
+
 @app.route('/new-session', methods=['POST'])
 def new_session():
     msg = agent.clear_session()
