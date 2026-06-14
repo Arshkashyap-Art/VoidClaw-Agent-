@@ -180,6 +180,35 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(12px); }
         .modal-content { background: var(--bg-card); width: 95%; max-width: 550px; padding: 40px; border-radius: 24px; border: 1px solid var(--border-main); }
         
+        @media (max-width: 768px) {
+            :root { --sidebar-width: 260px; }
+            .sidebar { position: absolute; left: 0; top: 0; bottom: 0; height: 100%; transition: transform 0.3s ease; transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .sidebar.collapsed { margin-left: 0; transform: translateX(-100%); }
+            
+            .workspace { padding: 0; }
+            .top-nav { padding: 12px 16px; }
+            .brand-name { font-size: 16px; }
+            
+            .welcome-view { padding: 20px; }
+            .greeting { font-size: 26px; }
+            .sub-greeting { font-size: 15px; margin-bottom: 32px; }
+            .suggestions-grid { grid-template-columns: 1fr; }
+            
+            .chat-view { padding: 20px 12px; }
+            .bubble { max-width: 95%; font-size: 14.5px; padding: 14px 18px; }
+            
+            .input-bar { padding: 16px; }
+            .dashboard-view { padding: 20px 16px; }
+            .stat-card { padding: 16px; }
+            .stat-value { font-size: 22px; }
+
+            .modal-content { padding: 24px; width: 90%; }
+        }
+
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 15; display: none; backdrop-filter: blur(4px); }
+        .sidebar-overlay.active { display: block; }
+
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
@@ -210,13 +239,15 @@
     </div>
 
     <!-- Sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
     <div class="sidebar" id="sidebar">
         <div class="brand-header">
             <div class="brand-logo-area"><div class="brand-logo">𒆙</div><div class="brand-name">VoidClaw</div></div>
+            <button class="toggle-sidebar-btn" onclick="toggleSidebar()" style="display: none;" id="sidebarCloseBtn"><i class="fas fa-times"></i></button>
         </div>
-        <div class="nav-item active" id="navNew" onclick="showView('welcome')"><div class="history-item-content"><i class="fas fa-plus"></i> Mission Hub</div></div>
-        <div class="nav-item" id="navDash" onclick="showView('dashboard')"><div class="history-item-content"><i class="fas fa-gauge-high"></i> Dashboard</div></div>
-        <div class="nav-item" onclick="openSettings()"><div class="history-item-content"><i class="fas fa-sliders-h"></i> Settings</div></div>
+        <div class="nav-item active" id="navNew" onclick="showView('welcome'); closeSidebarOnMobile()"><div class="history-item-content"><i class="fas fa-plus"></i> Mission Hub</div></div>
+        <div class="nav-item" id="navDash" onclick="showView('dashboard'); closeSidebarOnMobile()"><div class="history-item-content"><i class="fas fa-gauge-high"></i> Dashboard</div></div>
+        <div class="nav-item" onclick="openSettings(); closeSidebarOnMobile()"><div class="history-item-content"><i class="fas fa-sliders-h"></i> Settings</div></div>
         
         <span class="section-label">Memory Vault</span>
         <div class="sidebar-section" id="historyList"></div>
@@ -226,7 +257,7 @@
     <div class="workspace">
         <header class="top-nav">
             <div style="display: flex; align-items: center; gap: 24px;">
-                <button class="toggle-sidebar-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <button class="toggle-sidebar-btn" onclick="toggleSidebar()" id="sidebarToggleBtn"><i class="fas fa-bars"></i></button>
                 <div id="modelStatus" style="font-size: 13px; font-weight: 500; color: var(--text-secondary);">VoidClaw Engine: <span style="color: var(--accent);">---</span></div>
             </div>
             <div class="actions">
@@ -342,10 +373,30 @@
         let currentView = 'welcome';
         let previousView = 'welcome';
 
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+        function toggleSidebar() { 
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const closeBtn = document.getElementById('sidebarCloseBtn');
+            
+            if (window.innerWidth <= 768) {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+                closeBtn.style.display = sidebar.classList.contains('active') ? 'block' : 'none';
+            } else {
+                sidebar.classList.toggle('collapsed');
+            }
+        }
+
+        function closeSidebarOnMobile() {
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.remove('active');
+                document.getElementById('sidebarOverlay').classList.remove('active');
+                document.getElementById('sidebarCloseBtn').style.display = 'none';
+            }
+        }
         
         async function openSettings() { 
-            try {
+            closeSidebarOnMobile();
                 const res = await fetch('/settings');
                 const data = await res.json();
                 systemPrompt.value = data.system_prompt || '';
