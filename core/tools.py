@@ -102,40 +102,43 @@ class ToolManager:
             return str(e)
 
     def web_search(self, query):
-        try:
-            # Try the standard library approach
-            with DDGS() as ddgs:
-                results = [r for r in ddgs.text(query, max_results=5)]
-                if results:
-                    return "\n\n".join([f"Title: {r['title']}\nLink: {r['href']}\nSnippet: {r['body']}" for r in results])
-        except Exception as e:
-            # Fallback for Termux/Android where DDGS might panic
+        is_termux = os.path.exists('/data/data/com.termux')
+        
+        # On Termux, bypass DDGS entirely to avoid process-level panics
+        if not is_termux:
             try:
-                import requests
-                from bs4 import BeautifulSoup
-                
-                headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
-                url = f"https://html.duckduckgo.com/html/?q={query}"
-                resp = requests.get(url, headers=headers, timeout=10)
-                
-                if resp.status_code == 200:
-                    soup = BeautifulSoup(resp.content, "html.parser")
-                    results = []
-                    for result in soup.find_all("div", class_="result")[:5]:
-                        title_tag = result.find("a", class_="result__a")
-                        snippet_tag = result.find("a", class_="result__snippet")
-                        if title_tag:
-                            title = title_tag.get_text()
-                            link = title_tag.get("href")
-                            snippet = snippet_tag.get_text() if snippet_tag else "No snippet available."
-                            results.append(f"Title: {title}\nLink: {link}\nSnippet: {snippet}")
-                    
+                with DDGS() as ddgs:
+                    results = [r for r in ddgs.text(query, max_results=5)]
                     if results:
-                        return "\n\n".join(results)
-            except:
-                pass
+                        return "\n\n".join([f"Title: {r['title']}\nLink: {r['href']}\nSnippet: {r['body']}" for r in results])
+            except Exception:
+                pass # Fallback to scraper below
+
+        # Robust Fallback Scraper (Primary on Termux)
+        try:
+            import requests
+            from bs4 import BeautifulSoup
             
-            return f"Search Error: Library compatibility issue on this device. Fallback also failed."
+            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
+            url = f"https://html.duckduckgo.com/html/?q={query}"
+            resp = requests.get(url, headers=headers, timeout=10)
+            
+            if resp.status_code == 200:
+                soup = BeautifulSoup(resp.content, "html.parser")
+                results = []
+                for result in soup.find_all("div", class_="result")[:5]:
+                    title_tag = result.find("a", class_="result__a")
+                    snippet_tag = result.find("a", class_="result__snippet")
+                    if title_tag:
+                        title = title_tag.get_text().strip()
+                        link = title_tag.get("href")
+                        snippet = snippet_tag.get_text().strip() if snippet_tag else "No snippet available."
+                        results.append(f"Title: {title}\nLink: {link}\nSnippet: {snippet}")
+                
+                if results:
+                    return "\n\n".join(results)
+        except Exception as e:
+            return f"Search Error: {str(e)}"
         
         return "No results found."
 
