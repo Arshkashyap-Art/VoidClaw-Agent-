@@ -305,13 +305,14 @@ Respond normally for final answers.
 
     async def process_message(self, user_input, source="TERM"):
         prefix = "👤 YOU" if source == "TERM" else f"👤 YOU ({source})"
+        context_history = []
+        
         if source != "AUTO":
             print(f"\n{self.AMBER}{self.BOLD}{prefix}{self.RESET} {self.DIM}»{self.RESET} {user_input}")
             self.log_chat(f"USER ({source})", user_input)
             self.history.append({"role": "user", "content": user_input})
             self.total_tokens += len(user_input) // 4
-
-            context_history = self.history[-10:] if source != "AUTO" else []
+            context_history = self.history[-10:]
 
         context = "\n".join([f"{m['role']}: {m['content']}" for m in context_history])
         if source == "AUTO":
@@ -365,9 +366,13 @@ Respond normally for final answers.
                     print(f"\n{self.ORANGE}{self.BOLD}💭 THOUGHT (WEB){self.RESET} {self.DIM}»{self.RESET} {thought}")
                     print(f"{self.AMBER}{self.BOLD}🛠  ACTION (WEB){self.RESET}  {self.DIM}»{self.RESET} {tool_call['tool']}")
                     
-                    yield f"THOUGHT:{thought}"
+                    yield f"THOUGHT:{thought} | Executing {tool_call['tool']}..."
                     observation = self.tools.execute_tool(tool_call['tool'], tool_call['args'])
                     print(f"{self.GREEN}{self.BOLD}👁  OBSERVE (WEB){self.RESET} {self.DIM}»{self.RESET} Task Success")
+                    
+                    self.log_chat("VOIDCLAW_THOUGHT", thought)
+                    self.log_chat("VOIDCLAW_ACTION", f"Tool: {tool_call['tool']}")
+                    self.log_chat("OBSERVATION", observation)
                     
                     context += f"\nAgent Thought: {thought}\nObservation: {observation}"
                     continue
