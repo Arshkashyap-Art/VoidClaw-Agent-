@@ -26,7 +26,7 @@ echo -e "${ORANGE}==============================================================
 # Ensure we are in the root directory
 cd "$(dirname "$0")/.."
 
-# Fix for Rust/Maturin build errors (e.g. pydantic-core)
+# Fix for Rust/Maturin/LXML build errors
 export ANDROID_API_LEVEL=24
 
 echo -e "${ORANGE}[*] Updating system packages...${RESET}"
@@ -35,12 +35,11 @@ pkg update -y && pkg upgrade -y
 echo -e "${ORANGE}[*] Setting up Termux User Repository (TUR)...${RESET}"
 pkg install tur-repo -y
 
-echo -e "${ORANGE}[*] Installing system dependencies (Rust, Clang & Math Libs)...${RESET}"
-# Rust is required for pydantic-core and modern Python wheels
-# pkg install pre-built versions of heavy libraries to avoid maturin/compilation errors
+echo -e "${ORANGE}[*] Installing system dependencies (Rust, Clang & Build Headers)...${RESET}"
+# Install compilers and heavy pre-built libraries
 pkg install python git clang make rust binutils \
-    python-psutil python-numpy python-cryptography \
-    python-pydantic python-httpx -y
+    libxml2 libxslt libjpeg-turbo libpng \
+    python-psutil python-numpy python-cryptography python-lxml -y
 
 echo -e "${ORANGE}[*] Setting up virtual environment...${RESET}"
 # Create venv with system site packages to use pkg-installed heavy dependencies
@@ -54,6 +53,7 @@ echo -e "${ORANGE}[*] Upgrading pip and build tools...${RESET}"
 pip install --upgrade pip setuptools wheel
 
 # Install dependencies one by one to ensure failure of one doesn't stop others
+# Note: httpx and pydantic will be installed via pip, but ANDROID_API_LEVEL fix will help
 DEPS=("pyyaml" "requests" "python-telegram-bot" "ollama" "duckduckgo-search" "python-dotenv" "flask" "flask-cors" "waitress" "youtube-transcript-api" "beautifulsoup4" "yt-dlp" "apscheduler" "tzdata")
 
 for dep in "${DEPS[@]}"; do
@@ -64,6 +64,7 @@ done
 
 # Optional: Attempt scikit-learn
 echo -e "${ORANGE}[*] Attempting scikit-learn (optional)...${RESET}"
+echo -e "${AMBER}[!] This usually requires a very long time to build on Android. Skipping if it takes too long.${RESET}"
 pip install scikit-learn --prefer-binary || echo -e "${RED}[!] Skipping scikit-learn. Local RAG will be disabled.${RESET}"
 
 echo -e "${AMBER}[*] Starting Configuration Wizard...${RESET}"
