@@ -29,32 +29,37 @@ cd "$(dirname "$0")/.."
 echo -e "${ORANGE}[*] Updating system packages...${RESET}"
 pkg update -y && pkg upgrade -y
 
-echo -e "${ORANGE}[*] Installing system dependencies...${RESET}"
-# Install psutil via pkg to avoid build errors on Android
-pkg install python git clang make python-psutil -y
+echo -e "${ORANGE}[*] Setting up Termux User Repository (TUR)...${RESET}"
+pkg install tur-repo -y
+
+echo -e "${ORANGE}[*] Installing system dependencies (Rust, Clang & Math Libs)...${RESET}"
+# Rust is required for pydantic-core and modern Python wheels
+# pkg install pre-built versions of heavy libraries to save hours of compilation
+pkg install python git clang make rust binutils python-psutil python-numpy python-cryptography -y
 
 echo -e "${ORANGE}[*] Setting up virtual environment...${RESET}"
-# Create venv with system site packages so it can see pkg-installed psutil
+# Create venv with system site packages to use pkg-installed heavy dependencies
 if [ ! -d ".venv" ]; then
     python -m venv --system-site-packages .venv
 fi
 
 source .venv/bin/activate
 
-echo -e "${ORANGE}[*] Installing Python requirements...${RESET}"
-pip install --upgrade pip
+echo -e "${ORANGE}[*] Upgrading pip and build tools...${RESET}"
+pip install --upgrade pip setuptools wheel
 
 # Install dependencies one by one to ensure failure of one doesn't stop others
-DEPS=("pyyaml" "requests" "python-telegram-bot" "ollama" "duckduckgo-search" "python-dotenv" "flask" "flask-cors" "waitress" "youtube-transcript-api" "beautifulsoup4" "yt-dlp" "apscheduler" "numpy" "tzdata")
+DEPS=("pyyaml" "requests" "python-telegram-bot" "ollama" "duckduckgo-search" "python-dotenv" "flask" "flask-cors" "waitress" "youtube-transcript-api" "beautifulsoup4" "yt-dlp" "apscheduler" "tzdata")
 
 for dep in "${DEPS[@]}"; do
     echo -e "${ORANGE}[*] Installing $dep...${RESET}"
-    pip install "$dep" || echo -e "${RED}[!] Failed to install $dep via pip. Checking system...${RESET}"
+    # Use --prefer-binary to pull pre-built wheels wherever possible
+    pip install "$dep" --prefer-binary || echo -e "${RED}[!] Failed to install $dep via pip. Continuing...${RESET}"
 done
 
 # Optional: Attempt scikit-learn
 echo -e "${ORANGE}[*] Attempting scikit-learn (optional)...${RESET}"
-pip install scikit-learn || echo -e "${RED}[!] Skipping scikit-learn. Local RAG will be disabled.${RESET}"
+pip install scikit-learn --prefer-binary || echo -e "${RED}[!] Skipping scikit-learn. Local RAG will be disabled.${RESET}"
 
 echo -e "${AMBER}[*] Starting Configuration Wizard...${RESET}"
 python core/setup.py
