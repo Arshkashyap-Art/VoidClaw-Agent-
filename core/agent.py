@@ -48,16 +48,13 @@ class VoidClawAgent:
         self.total_tokens = 0
         self.tool_usage = {}
 
-        # Scheduler
+        # Scheduler (Initialized but not started yet)
         try:
             self.scheduler = AsyncIOScheduler()
         except Exception as e:
-            # Fallback for systems where local timezone lookup fails (e.g. Termux)
-            print(f"{self.AMBER}[!] Local timezone lookup failed, falling back to UTC.{self.RESET}")
             from datetime import timezone
             self.scheduler = AsyncIOScheduler(timezone=timezone.utc)
         
-        self.scheduler.start()
         self._load_tasks()
 
         self.tg_app = None
@@ -169,8 +166,16 @@ class VoidClawAgent:
         try:
             if trigger_type == 'cron':
                 trigger = CronTrigger.from_crontab(trigger_args)
+            elif trigger_type == 'interval':
+                # Support minutes or seconds (e.g. '1m', '30s', or just '1' for minutes)
+                if trigger_args.endswith('s'):
+                    trigger = IntervalTrigger(seconds=int(trigger_args[:-1]))
+                elif trigger_args.endswith('m'):
+                    trigger = IntervalTrigger(minutes=int(trigger_args[:-1]))
+                else:
+                    trigger = IntervalTrigger(minutes=int(trigger_args))
             else:
-                trigger = IntervalTrigger(minutes=int(trigger_args))
+                return f"Error: Unsupported trigger type {trigger_type}"
             
             task_id = str(uuid.uuid4())[:8]
             self.scheduler.add_job(
@@ -216,13 +221,15 @@ class VoidClawAgent:
             # Dynamically update system prompt with current time before processing
             self.system_prompt = self._load_system_prompt()
             
-            print(f"\n{self.ORANGE}{self.BOLD}⏰ AUTONOMOUS TASK{self.RESET} {self.DIM}»{self.RESET} {instruction}")
+            print(f"\n{self.ORANGE}{self.BOLD}⏰ AUTONOMOUS TASK TRIGGERED{self.RESET} {self.DIM}»{self.RESET} {instruction}")
             reply = await self.process_message(f"AUTONOMOUS SCHEDULED TASK: {instruction}", source="AUTO")
             
             if reply:
                 # Broadcast to Web UI
                 try:
-                    push_notification(reply)
+                    from core.server import push_notification
+                    push_notification(f"⏰ {reply}")
+                    print(f"{self.GREEN}{self.BOLD}👁  NOTIFIED{self.RESET} {self.DIM}»{self.RESET} Web UI")
                 except Exception as e:
                     print(f"Web Notification Error: {e}")
 
@@ -230,6 +237,7 @@ class VoidClawAgent:
                 if self.tg_app and self.last_tg_chat_id:
                     try:
                         await self.tg_app.bot.send_message(chat_id=self.last_tg_chat_id, text=f"🔔 {reply}")
+                        print(f"{self.GREEN}{self.BOLD}👁  NOTIFIED{self.RESET} {self.DIM}»{self.RESET} Telegram")
                     except Exception as e:
                         print(f"Telegram Notification Error: {e}")
         except Exception as e:
@@ -279,20 +287,18 @@ Tools:
 - download_youtube: url, format_type (video/audio)
 - convert_media: input_file, output_format
 - local_rag_search: query (Semantic search across all workspace files)
-- schedule_task: trigger_type ('cron' or 'interval'), schedule_args (cron string or minutes), instruction (Goal for the agent)
+- schedule_task: trigger_type ('cron' or 'interval'), schedule_args (cron string or minutes/seconds like '1m' or '30s'), instruction (Goal for the agent)
 - list_tasks: (List all scheduled autonomous tasks)
 - remove_task: keyword (Remove a task using a keyword from its instruction, e.g., 'blink' or 'water')
 - remove_all_tasks: (Cancel all active background tasks)
 
 Autonomous Operation:
 You can schedule yourself to perform tasks 24/7. 
-Example: Use 'schedule_task' with 'interval' and '60' to remind the user of something every hour.
+Example: Use 'schedule_task' with 'interval' and '1m' to remind the user of something every minute.
+Example: Use 'schedule_task' with 'interval' and '30s' for high-frequency reminders.
 Example: Use 'schedule_task' with 'cron' and '0 8 * * *' to perform a daily morning briefing.
 When a scheduled task triggers, you will receive a message from 'SYSTEM' and you should execute the instruction autonomously.
-
-To stop or remove a task (like a reminder):
-Call 'remove_task' IMMEDIATELY using a keyword from the instruction (e.g., if the user says "stop blink reminder", use remove_task(keyword="blink")). 
-Do NOT call 'list_tasks' first. Use keyword-based removal for instant action.
+You MUST provide a clear, final answer to the user when a task triggers. For a reminder, simply state the reminder message.
 
 Respond normally for final answers.
 """
@@ -449,6 +455,10 @@ async def main():
     # Start Web Server in a background thread
     web_thread = threading.Thread(target=start_web_server, args=(agent,), daemon=True)
     web_thread.start()
+
+    # Start the Autonomous Scheduler
+    print(f"\033[38;5;214m[SYSTEM]\033[0m Starting Autonomous Scheduler...")
+    agent.scheduler.start()
 
     # Telegram Setup
     token = config.get('telegram_token')
