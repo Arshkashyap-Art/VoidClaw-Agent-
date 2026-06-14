@@ -49,7 +49,14 @@ class VoidClawAgent:
         self.tool_usage = {}
 
         # Scheduler
-        self.scheduler = AsyncIOScheduler()
+        try:
+            self.scheduler = AsyncIOScheduler()
+        except Exception as e:
+            # Fallback for systems where local timezone lookup fails (e.g. Termux)
+            print(f"{self.AMBER}[!] Local timezone lookup failed, falling back to UTC.{self.RESET}")
+            from datetime import timezone
+            self.scheduler = AsyncIOScheduler(timezone=timezone.utc)
+        
         self.scheduler.start()
         self._load_tasks()
 

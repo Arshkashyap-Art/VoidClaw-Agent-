@@ -43,7 +43,7 @@ echo -e "${ORANGE}[*] Installing Python requirements...${RESET}"
 pip install --upgrade pip
 
 # Install dependencies one by one to ensure failure of one doesn't stop others
-DEPS=("pyyaml" "requests" "python-telegram-bot" "ollama" "duckduckgo-search" "python-dotenv" "flask" "flask-cors" "waitress" "youtube-transcript-api" "beautifulsoup4" "yt-dlp" "apscheduler" "numpy")
+DEPS=("pyyaml" "requests" "python-telegram-bot" "ollama" "duckduckgo-search" "python-dotenv" "flask" "flask-cors" "waitress" "youtube-transcript-api" "beautifulsoup4" "yt-dlp" "apscheduler" "numpy" "tzdata")
 
 for dep in "${DEPS[@]}"; do
     echo -e "${ORANGE}[*] Installing $dep...${RESET}"
