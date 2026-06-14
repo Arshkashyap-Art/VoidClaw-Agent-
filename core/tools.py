@@ -327,6 +327,16 @@ class ToolManager:
         except Exception as e:
             return f"Error in RAG search: {str(e)}"
 
+    def remind_me(self, message, time_args):
+        if not self.agent: return "Agent not connected."
+        # Standardize instruction for better removal later
+        instruction = f"REMINDER: {message}"
+        return self.agent.add_scheduled_task('interval', time_args, instruction)
+
+    def stop_reminders(self, keyword):
+        if not self.agent: return "Agent not connected."
+        return self.agent.remove_scheduled_task(keyword)
+
     def schedule_task(self, trigger_type, schedule_args, instruction):
         if not self.agent: return "Agent not connected."
         return self.agent.add_scheduled_task(trigger_type, schedule_args, instruction)

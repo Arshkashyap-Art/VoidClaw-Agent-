@@ -341,6 +341,12 @@ Respond normally for final answers.
                         self.reload_config()
                     
                     print(f"{self.GREEN}{self.BOLD}👁  OBSERVE{self.RESET} {self.DIM}»{self.RESET} Task Success")
+                    
+                    if source == "AUTO":
+                        # If an autonomous task results in a final answer during tool use (unlikely but possible)
+                        # or if we want to log the observation as the final result for simple tasks.
+                        pass
+
                     self.log_chat("VOIDCLAW_THOUGHT", thought)
                     self.log_chat("VOIDCLAW_ACTION", f"Tool: {tool_call['tool']}")
                     self.log_chat("OBSERVATION", observation)
@@ -348,10 +354,15 @@ Respond normally for final answers.
                     context += f"\nAgent Thought: {thought}\nObservation from {tool_call['tool']}: {observation}"
                     continue
             except:
-                print(f"\n{self.ORANGE}{self.BOLD}{self.LOGO}   VOIDCLAW{self.RESET} {self.DIM}»{self.RESET} {response}")
+                # FINAL ANSWER
+                if source == "AUTO":
+                    print(f"\n{self.ORANGE}{self.BOLD}📡 PROACTIVE BROADCAST{self.RESET} {self.DIM}»{self.RESET} {response}")
+                else:
+                    print(f"\n{self.ORANGE}{self.BOLD}{self.LOGO}   VOIDCLAW{self.RESET} {self.DIM}»{self.RESET} {response}")
                 
                 self.log_chat("VOIDCLAW_RESPONSE", response)
-                self.history.append({"role": "assistant", "content": response})
+                if source != "AUTO":
+                    self.history.append({"role": "assistant", "content": response})
                 return response
         return "Reasoning limit reached."
 
