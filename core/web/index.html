@@ -686,33 +686,55 @@
         }
 
         async function init() {
+            // Load Status
             try {
                 const sRes = await fetch('/status');
-                const sData = await sRes.json();
-                document.getElementById('modelStatus').querySelector('span').innerText = sData.model;
-                
+                if (sRes.ok) {
+                    const sData = await sRes.json();
+                    document.getElementById('modelStatus').querySelector('span').innerText = sData.model;
+                }
+            } catch (e) { console.error("Status load failed", e); }
+            
+            // Load History
+            try {
                 const hRes = await fetch('/history');
                 const hData = await hRes.json();
                 
                 historyList.innerHTML = '';
-                for(const file of hData) {
-                    const detailRes = await fetch(`/chat-detail/${file}`);
-                    const detailData = await detailRes.json();
-                    
-                    let snippet = file.replace('.md', '').replace('session_', '');
-                    const match = detailData.content.match(/### \[.*?\] USER.*?\n(.*?)\n/);
-                    if (match && match[1]) snippet = match[1].substring(0, 30) + (match[1].length > 30 ? '...' : '');
-
-                    const item = document.createElement('div');
-                    item.className = 'nav-item';
-                    item.onclick = () => loadChatDetail(file);
-                    item.innerHTML = `
-                        <div class="history-item-content"><i class="far fa-message"></i> <span>${snippet}</span></div>
-                        <i class="fas fa-trash-alt delete-chat" onclick="deleteSession(event, '${file}')" style="font-size: 12px; opacity: 0.5;"></i>
-                    `;
-                    historyList.appendChild(item);
+                if (!hData || hData.length === 0) {
+                    historyList.innerHTML = '<div style="padding: 10px 8px; font-size: 12px; color: var(--text-muted);">No archived sessions.</div>';
+                    return;
                 }
-            } catch (e) {}
+
+                for(const file of hData) {
+                    try {
+                        const detailRes = await fetch(`/chat-detail/${file}`);
+                        const detailData = await detailRes.json();
+                        
+                        let snippet = file.replace('.md', '').replace('session_', '');
+                        if (detailData.content) {
+                            const match = detailData.content.match(/### \[.*?\] USER.*?\n(.*?)\n/);
+                            if (match && match[1] && match[1].trim()) {
+                                snippet = match[1].trim().substring(0, 28) + (match[1].trim().length > 28 ? '...' : '');
+                            }
+                        }
+
+                        const item = document.createElement('div');
+                        item.className = 'nav-item';
+                        item.onclick = () => loadChatDetail(file);
+                        item.innerHTML = `
+                            <div class="history-item-content"><i class="far fa-message"></i> <span>${snippet}</span></div>
+                            <i class="fas fa-trash-alt delete-chat" onclick="deleteSession(event, '${file}')" style="font-size: 12px; opacity: 0.5;"></i>
+                        `;
+                        historyList.appendChild(item);
+                    } catch (err) {
+                        console.error(`Failed to load history item: ${file}`, err);
+                    }
+                }
+            } catch (e) { 
+                console.error("History list load failed", e);
+                historyList.innerHTML = '<div style="padding: 10px 8px; font-size: 12px; color: #ef4444;">Error loading history.</div>';
+            }
         }
 
         function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
