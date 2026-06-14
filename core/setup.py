@@ -67,9 +67,28 @@ def run_setup():
     print(ORANGE + "="*64 + RESET)
     print()
 
-    config_path = os.path.join('common', 'config.yaml')
-    with open(config_path, 'r') as f:
-        config = yaml.safe_load(f)
+    config_dir = 'common'
+    config_path = os.path.join(config_dir, 'config.yaml')
+    
+    if not os.path.exists(config_dir):
+        os.makedirs(config_dir)
+
+    if os.path.exists(config_path):
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f) or {}
+    else:
+        # Default configuration template
+        config = {
+            'default_provider': 'ollama',
+            'telegram_token': 'YOUR_TELEGRAM_BOT_TOKEN',
+            'workspace_dir': 'workspace',
+            'gemini': {'model': 'gemini-1.5-flash', 'api_key': ''},
+            'openai': {'model': 'gpt-4o-mini', 'api_key': ''},
+            'anthropic': {'model': 'claude-3-5-sonnet-20240620', 'api_key': ''},
+            'ollama': {'model': 'llama3', 'host': 'http://localhost:11434'},
+            'nvidia': {'model': 'meta/llama3-70b-instruct', 'api_key': ''},
+            'openrouter': {'model': 'google/gemma-2-9b-it:free', 'api_key': ''}
+        }
 
     print(ORANGE + "-"*64 + RESET)
     print(AMBER + "                VOIDCLAW MODEL REGISTRY                         " + RESET)

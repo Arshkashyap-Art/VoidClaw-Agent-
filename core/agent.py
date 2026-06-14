@@ -408,6 +408,12 @@ async def terminal_loop(agent):
 async def main():
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     config_path = os.path.join(base_dir, 'common', 'config.yaml')
+    
+    if not os.path.exists(config_path):
+        print("\033[91m[!] Configuration file not found at common/config.yaml\033[0m")
+        print("\033[93m[*] Please run the installation script first to configure the agent.\033[0m")
+        return
+
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
 
