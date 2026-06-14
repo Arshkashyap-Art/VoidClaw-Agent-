@@ -397,6 +397,7 @@
         
         async function openSettings() { 
             closeSidebarOnMobile();
+            try {
                 const res = await fetch('/settings');
                 const data = await res.json();
                 systemPrompt.value = data.system_prompt || '';
