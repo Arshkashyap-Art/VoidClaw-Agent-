@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 from duckduckgo_search import DDGS
 
 class ToolManager:
@@ -33,11 +34,57 @@ class ToolManager:
             "schedule_task": self.schedule_task,
             "list_tasks": self.list_tasks,
             "remove_task": self.remove_task,
-            "remove_all_tasks": self.remove_all_tasks
+            "remove_all_tasks": self.remove_all_tasks,
+            "remind_me": self.remind_me,
+            "stop_reminders": self.stop_reminders,
+            "android_control": self.android_control
         }
         if tool_name in tools:
             return tools[tool_name](**args)
         return f"Tool {tool_name} not found."
+
+    def android_control(self, action, target=""):
+        """Controls Android system using Shizuku (rish)"""
+        is_android = os.path.exists('/data/data/com.termux')
+        if not is_android:
+            return "Error: Android control is only available on Android/Termux environments."
+
+        # Check if rish is in path or common locations
+        rish_path = shutil.which('rish')
+        if not rish_path:
+            # Check local bin
+            local_bin = '/data/data/com.termux/files/usr/bin/rish'
+            if os.path.exists(local_bin):
+                rish_path = local_bin
+            else:
+                return "Error: 'rish' not found. Please set up Shizuku in Termux first by running: curl -sL https://raw.githubusercontent.com/RikkaApps/Shizuku-API/master/rish/rish.sh > /data/data/com.termux/files/usr/bin/rish && chmod +x /data/data/com.termux/files/usr/bin/rish"
+
+        cmd_map = {
+            "open_app": f"am start -n {target} || monkey -p {target} -c android.intent.category.LAUNCHER 1",
+            "home": "input keyevent 3",
+            "back": "input keyevent 4",
+            "media_play_pause": "input keyevent 85",
+            "volume_up": "input keyevent 24",
+            "volume_down": "input keyevent 25",
+            "screen_off": "input keyevent 26",
+            "raw_shell": target
+        }
+
+        if action not in cmd_map:
+            return f"Error: Unsupported action '{action}'."
+
+        final_cmd = cmd_map[action]
+        try:
+            # Execute via rish
+            result = subprocess.run([rish_path, "-c", final_cmd], capture_output=True, text=True, timeout=10)
+            if result.returncode == 0:
+                return f"Success: Action '{action}' executed."
+            else:
+                return f"Error: {result.stderr.strip()}"
+        except subprocess.TimeoutExpired:
+            return "Error: Command timed out. Is Shizuku service running?"
+        except Exception as e:
+            return f"Error: {str(e)}"
 
     def _safe_path(self, filename):
         path = os.path.abspath(os.path.join(self.workspace_dir, filename))
