@@ -7,4 +7,4 @@ if [ -d ".venv" ]; then
     source .venv/bin/activate
 fi
 
-python3 core/agent.py
+python3 -m core.agent
