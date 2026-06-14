@@ -13,9 +13,9 @@ from waitress import serve
 app = Flask(__name__, static_folder='web')
 CORS(app)
 
-# Global agent instance and thread-safe notification queue
+# Global agent instance and multi-client notification system
 agent = None
-notification_queue = queue.Queue()
+clients = []
 
 # Configure upload folder
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'workspace')
@@ -126,19 +126,24 @@ def new_session():
 @app.route('/notifications')
 def notifications():
     def stream():
-        while True:
-            try:
-                # Block for 20s to wait for message, then send keep-alive
-                msg = notification_queue.get(timeout=20)
-                yield f"data: {json.dumps(msg)}\n\n"
-            except queue.Empty:
-                yield ": keep-alive\n\n"
-            except:
-                break
+        q = queue.Queue()
+        clients.append(q)
+        try:
+            while True:
+                try:
+                    # Block for 20s to wait for message, then send keep-alive
+                    msg = q.get(timeout=20)
+                    yield f"data: {json.dumps(msg)}\n\n"
+                except queue.Empty:
+                    yield ": keep-alive\n\n"
+        finally:
+            if q in clients:
+                clients.remove(q)
     return Response(stream(), mimetype='text/event-stream')
 
 def push_notification(content):
-    notification_queue.put({'content': content})
+    for q in clients:
+        q.put({'content': content})
 
 @app.route('/delete-session/<filename>', methods=['DELETE'])
 def delete_session(filename):
