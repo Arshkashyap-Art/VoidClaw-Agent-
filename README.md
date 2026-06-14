@@ -10,6 +10,9 @@
 
 ---
 
+<img width="1672" height="941" alt="voidclaw " src="https://github.com/user-attachments/assets/f1275879-da03-4b29-be83-aac846e3aac2" />
+
+
 ## 📖 Overview
 
 VoidClaw is a highly advanced, local-first AI agent framework. It acts as a continuous autonomous assistant that learns your preferences over time, interacts with your local filesystem, scrapes the web, and communicates with you via a premium Web UI, Telegram, or the Terminal.
