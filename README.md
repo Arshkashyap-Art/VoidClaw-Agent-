@@ -62,35 +62,22 @@ VoidClaw is designed to be **100% portable**.
     chmod +x termux/install.sh termux/run.sh
     ./termux/install.sh
     ```
-3.  **Enable Android Control (Shizuku Setup):**
-    VoidClaw can control your phone (open apps, volume, home/back) via Shizuku. Follow these steps to enable it:
+3.  **Enable Android Control (Zero-Config Shizuku Setup):**
+    VoidClaw now features **Auto-Provisioning** for Shizuku. No manual file moving required!
 
     *   **Step A: Install Shizuku**
         Download and install the [Shizuku App](https://shizuku.rikka.app/download/) on your phone.
     *   **Step B: Start Shizuku Service**
-        Open the Shizuku app and start the service (usually via **Wireless Debugging** in Android Developer Options). Follow the in-app instructions.
-    *   **Step C: Set up `rish` in Termux**
-        Shizuku provides a special way for Termux to use its service. Follow these exact steps:
-        1.  In the **Shizuku app**, tap **"Use Shizuku in terminal apps"** -> **"Export files"**.
-        2.  Save the files into a folder named **"Shizuku"** in your phone's Internal Storage.
-        3.  Open Termux and run these commands to import the files:
-            ```bash
-            # Grant storage permission to Termux
-            termux-setup-storage
-            
-            # Create the local bin folder and copy the exported files
-            mkdir -p $PREFIX/bin
-            cp /sdcard/Shizuku/rish $PREFIX/bin/rish
-            cp /sdcard/Shizuku/rish_shizuku.dex $PREFIX/bin/rish_shizuku.dex
-            chmod +x $PREFIX/bin/rish
-            ```
-    *   **Step D: Verify**
-        In Termux, type:
-        ```bash
-        export RISH_APPLICATION_ID="com.termux"
-        rish
-        ```
-        If it shows a shell prompt (`$`) without errors, you are ready! Type `exit` to return to VoidClaw.
+        Open the Shizuku app and start the service (usually via **Wireless Debugging** in Android Developer Options).
+    *   **Step C: Export & Grant Permission**
+        1.  In Shizuku app, tap **"Use Shizuku in terminal apps"** -> **"Export files"**.
+        2.  Save them into a folder named **"Shizuku"** in your phone's Internal Storage.
+        3.  In Termux, run: `termux-setup-storage` and grant permission.
+    *   **Step D: That's it!**
+        The next time you tell VoidClaw to control your phone (e.g., *"Open YouTube"*), it will **automatically** import and configure the files for you.
+
+    *   **Step E: Manual Verification (Optional)**
+        Type `rish` in Termux. If it shows a shell prompt (`$`), you are ready! Type `exit` to return.
         *(Note: Termux does NOT need to be toggled in 'Authorized applications' when using this method)*
 
 ### 🪟 Windows Setup
