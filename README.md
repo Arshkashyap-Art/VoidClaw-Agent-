@@ -146,6 +146,12 @@ VoidClaw is designed to be **100% portable**.
 2. To launch: `./linux/run.sh`
 
 ---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
 <div align="center">
   <i>Conceptualized and Built by Mohd Abuzar</i><br>
   <b>VoidClaw: Autonomous. Evolutionary. Universal.</b>
