@@ -23,12 +23,6 @@
   <img src="https://img.shields.io/badge/Control-Shizuku%20Integrated-1a1a1a?style=flat-square&logo=android&logoColor=E8B81A&labelColor=0a0a0a" />
 </p>
 
-<!-- Tech Stack Badges -->
-<p align="center">
-  <img src="https://img.shields.io/badge/Security-Zero%20Trust-1a1a1a?style=flat-square&labelColor=0a0a0a" />
-  <img src="https://img.shields.io/badge/Deployment-Cross%20Platform-1a1a1a?style=flat-square&labelColor=0a0a0a" />
-</p>
-
 <!-- Repository Stats -->
 <p align="center">
   <img src="https://img.shields.io/github/stars/yourusername/VoidClaw?style=flat-square&logo=github&labelColor=0a0a0a&color=E8B81A" />
