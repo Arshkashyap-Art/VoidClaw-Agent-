@@ -1,13 +1,52 @@
 <div align="center">
-<img width="2167" height="726" alt="Voidclaw" src="https://github.com/user-attachments/assets/8627d339-e841-4364-bbd9-c31552080522" />
-  <h1>𒆙 VoidClaw</h1>
-  <p><b>The Ultimate Evolutionary, Cross-Platform Autonomous AI Command Center</b></p>
-  <p>
-    <img src="https://img.shields.io/badge/Python-3.10+-blue.svg" alt="Python" />
-    <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Mac%20%7C%20Linux%20%7C%20Android-orange.svg" alt="Platforms" />
-    <img src="https://img.shields.io/badge/UI-Glassmorphism-purple.svg" alt="UI" />
-    <img src="https://img.shields.io/badge/Control-Shizuku%20Integrated-green.svg" alt="Shizuku" />
-  </p>
+  
+<!-- Animated Gradient Banner -->
+<img width="100%" height="auto" alt="Voidclaw Banner" src="https://capsule-render.vercel.app/api?type=waving&color=0:1a0b2e,100:4a1d6d&height=200&section=header&text=VoidClaw&fontSize=60&fontColor=ffffff&animation=fadeIn" />
+
+<!-- Main Logo/Header Image -->
+<img width="2167" height="400" alt="VoidClaw" src="https://github.com/user-attachments/assets/8627d339-e841-4364-bbd9-c31552080522" />
+
+<!-- Glowing Title -->
+<h1>
+  <img src="https://readme-typing-svg.demolab.com?font=Orbitron&weight=700&size=40&duration=3000&pause=500&color=9B59B6&center=true&vCenter=true&width=600&height=70&lines=%F0%9D%98%86+VOIDCLAW+%F0%9D%98%86;NEURAL+COMMAND+CORE;AUTONOMOUS+INTELLIGENCE" alt="Typing SVG" />
+</h1>
+
+<!-- Subtitle with Neon Effect -->
+<p align="center">
+  <samp>
+    <b>⚡ THE ULTIMATE EVOLUTIONARY, CROSS-PLATFORM AUTONOMOUS AI COMMAND CENTER ⚡</b>
+  </samp>
+</p>
+
+<br/>
+
+<!-- Animated Badges -->
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white&labelColor=1a1a2e" />
+  <img src="https://img.shields.io/badge/Platform-Universal-FF6B6B?style=for-the-badge&logo=matrix&logoColor=white&labelColor=1a1a2e" />
+  <img src="https://img.shields.io/badge/UI-Glassmorphism-00D2FF?style=for-the-badge&logo=figma&logoColor=white&labelColor=1a1a2e" />
+  <img src="https://img.shields.io/badge/Control-Shizuku%20Integrated-9B59B6?style=for-the-badge&logo=android&logoColor=white&labelColor=1a1a2e" />
+</p>
+
+<!-- Advanced Badges Row -->
+<p align="center">
+  <img src="https://img.shields.io/badge/🤖_AI_Framework-LangGraph-00ACC1?style=flat-square&logo=ai&logoColor=white" />
+  <img src="https://img.shields.io/badge/🧠_Neural_Core-Transformer_Architecture-FF6B35?style=flat-square" />
+  <img src="https://img.shields.io/badge/🛡️_Security-Zero_Trust-FF0000?style=flat-square" />
+  <img src="https://img.shields.io/badge/⚡_Performance-Ultrafast-00FF00?style=flat-square" />
+</p>
+
+<!-- Stats Row -->
+<p align="center">
+  <img src="https://img.shields.io/github/stars/yourusername/VoidClaw?style=social&logo=github" />
+  <img src="https://img.shields.io/github/forks/yourusername/VoidClaw?style=social&logo=github" />
+  <img src="https://img.shields.io/github/license/yourusername/VoidClaw?style=flat-square" />
+  <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen?style=flat-square&logo=github" />
+</p>
+
+<!-- Decorative Divider -->
+<img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" width="100%">
+
 </div>
 
 ---
