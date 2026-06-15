@@ -25,9 +25,9 @@
 
 <!-- Repository Stats -->
 <p align="center">
-  <img src="https://img.shields.io/github/stars/yourusername/VoidClaw?style=flat-square&logo=github&labelColor=0a0a0a&color=E8B81A" />
-  <img src="https://img.shields.io/github/forks/yourusername/VoidClaw?style=flat-square&logo=github&labelColor=0a0a0a&color=E8B81A" />
-  <img src="https://img.shields.io/github/license/yourusername/VoidClaw?style=flat-square&labelColor=0a0a0a&color=E8B81A" />
+  <img src="https://img.shields.io/github/stars/AbuZar-Ansarii/VoidClaw-Agent?style=flat-square&logo=github&labelColor=0a0a0a&color=E8B81A" />
+  <img src="https://img.shields.io/github/forks/AbuZar-Ansarii/VoidClaw-Agent?style=flat-square&logo=github&labelColor=0a0a0a&color=E8B81A" />
+  <img src="https://img.shields.io/github/license/AbuZar-Ansarii/VoidClaw-Agent?style=flat-square&labelColor=0a0a0a&color=E8B81A" />
 </p>
 
 <!-- Clean Divider -->
