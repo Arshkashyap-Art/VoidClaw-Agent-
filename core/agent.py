@@ -483,6 +483,11 @@ async def main():
         config = yaml.safe_load(f)
 
     agent = VoidClawAgent(config_path)
+    
+    # Auto-Provision Shizuku if on Android
+    if os.path.exists('/data/data/com.termux'):
+        agent.tools._provision_shizuku()
+        
     os.system('cls' if os.name == 'nt' else 'clear')
     print_dashboard(config)
 
