@@ -25,8 +25,6 @@
 
 <!-- Tech Stack Badges -->
 <p align="center">
-  <img src="https://img.shields.io/badge/Framework-LangGraph-1a1a1a?style=flat-square&logoColor=E8B81A&labelColor=0a0a0a" />
-  <img src="https://img.shields.io/badge/Architecture-Transformer-1a1a1a?style=flat-square&labelColor=0a0a0a" />
   <img src="https://img.shields.io/badge/Security-Zero%20Trust-1a1a1a?style=flat-square&labelColor=0a0a0a" />
   <img src="https://img.shields.io/badge/Deployment-Cross%20Platform-1a1a1a?style=flat-square&labelColor=0a0a0a" />
 </p>
@@ -42,6 +40,7 @@
 <hr width="60%">
 
 </div>
+
 ## 📖 Overview
 
 VoidClaw is a highly advanced, local-first AI agent framework. It acts as a continuous autonomous assistant that learns your preferences over time, interacts with your local filesystem, scrapes the web, and proactively manages your digital life. Designed for portability, it runs seamlessly on high-end PCs and Android phones alike, turning your device into an autonomous mission hub.
