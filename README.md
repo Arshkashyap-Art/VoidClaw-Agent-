@@ -120,6 +120,18 @@ VoidClaw is designed to be **100% portable**.
     chmod +x termux/install.sh termux/run.sh
     ./termux/install.sh
     ```
+**Run Agent**
+```
+./termux/run.sh
+```
+#### For Frest termux Start
+```
+cd VoidClaw-Agent
+```
+```
+./termux/run.sh
+```
+    
 3.  **Enable Android Control (Zero-Config Shizuku Setup):**
     VoidClaw now features **Auto-Provisioning** for Shizuku. No manual file moving required!
 
