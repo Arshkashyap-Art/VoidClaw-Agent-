@@ -507,14 +507,6 @@ async def main():
     if token and token != "YOUR_TELEGRAM_BOT_TOKEN":
         print(f"\033[38;5;214m[SYSTEM]\033[0m Initializing Telegram Secure Link...")
         
-        # Robust Setup for Mobile/Termux Environments
-        from telegram.request import HTTPXRequest
-        
-        # Increase timeouts for mobile networks
-        request = HTTPXRequest(connect_timeout=20.0, read_timeout=20.0)
-        application = ApplicationBuilder().token(token).request(request).build()
-        agent.tg_app = application
-        
         async def handle_tg(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if not update.message or not update.message.text: return
             agent.last_tg_chat_id = update.effective_chat.id
@@ -522,23 +514,37 @@ async def main():
             reply = await agent.process_message(update.message.text, source="TG")
             await update.message.reply_text(reply)
             
-        application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_tg))
-        
         # Connection Retry Loop
         max_retries = 3
         for attempt in range(max_retries):
             try:
+                # Re-create application for each attempt to ensure a clean state
+                from telegram.request import HTTPXRequest
+                
+                # Increase timeouts for better reliability on all platforms
+                request = HTTPXRequest(connect_timeout=30.0, read_timeout=30.0)
+                application = ApplicationBuilder().token(token).request(request).build()
+                application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_tg))
+                agent.tg_app = application
+
                 await application.initialize()
                 await application.start()
                 await application.updater.start_polling(drop_pending_updates=True)
                 print(f"\033[92m[+] Telegram Bot active.\033[0m")
                 break
             except Exception as e:
+                # Cleanup partial state to avoid "ExtBot not initialized" or "coroutine never awaited" warnings
+                try:
+                    if 'application' in locals():
+                        await application.shutdown()
+                except: pass
+                
                 if attempt < max_retries - 1:
                     wait = (attempt + 1) * 5
                     print(f"\033[93m[!] Telegram Connection Delayed ({e}). Retrying in {wait}s... ({attempt+1}/{max_retries})\033[0m")
                     await asyncio.sleep(wait)
                 else:
+                    agent.tg_app = None # Ensure no dead reference
                     print(f"\n\033[91m[!] Telegram Connection Timeout: {e}\033[0m")
                     print("\033[93m[*] Switching to Terminal + Web mode only.\033[0m")
         
