@@ -503,32 +503,50 @@ async def main():
     agent.scheduler.start()
 
     # Telegram Setup
-    token = config.get('telegram_token')
+    token = config.get('telegram_token', '').strip()
     if token and token != "YOUR_TELEGRAM_BOT_TOKEN":
+        print(f"\033[38;5;214m[SYSTEM]\033[0m Establishing Telegram Secure Link...")
+        
+        # Cross-platform IPv4 Force (Solves Jio/Airtel/ISP connectivity issues)
         try:
-            from telegram.request import HTTPXRequest
-            # Using very long timeouts as a robust fallback for slow handshakes
-            request = HTTPXRequest(connect_timeout=100.0, read_timeout=100.0)
-            application = ApplicationBuilder().token(token).request(request).build()
-            agent.tg_app = application # Store app for proactive messages
-            
-            async def handle_tg(update: Update, context: ContextTypes.DEFAULT_TYPE):
-                if not update.message or not update.message.text: return
-                agent.last_tg_chat_id = update.effective_chat.id # Store last chat ID
-                print(f"\n\033[38;5;214m[TELEGRAM]\033[0m Incoming transmission from {update.effective_user.first_name}...")
-                reply = await agent.process_message(update.message.text, source="TG")
-                await update.message.reply_text(reply)
+            import socket
+            orig_getaddrinfo = socket.getaddrinfo
+            def patched_getaddrinfo(*args, **kwargs):
+                return orig_getaddrinfo(args[0], args[1], socket.AF_INET, *args[2:], **kwargs)
+            socket.getaddrinfo = patched_getaddrinfo
+        except: pass
+
+        for attempt in range(3):
+            try:
+                from telegram.request import HTTPXRequest
+                # Disable HTTP2 and use longer timeouts to bypass strict ISP filters
+                request = HTTPXRequest(http2=False, connect_timeout=40.0, read_timeout=40.0)
+                application = ApplicationBuilder().token(token).request(request).build()
+                agent.tg_app = application
                 
-            application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_tg))
-            await application.initialize()
-            await application.start()
-            await application.updater.start_polling()
-            print(f"\033[92m[+] Telegram Bot active.\033[0m")
-            await terminal_loop(agent)
-        except Exception as e:
-            print(f"\n\033[91m[!] Telegram Setup Failed: {e}\033[0m")
-            print("\033[93m[*] Continuing in Terminal + Web mode.\033[0m")
-            await terminal_loop(agent)
+                async def handle_tg(update: Update, context: ContextTypes.DEFAULT_TYPE):
+                    if not update.message or not update.message.text: return
+                    agent.last_tg_chat_id = update.effective_chat.id
+                    print(f"\n\033[38;5;214m[TELEGRAM]\033[0m Incoming transmission from {update.effective_user.first_name}...")
+                    reply = await agent.process_message(update.message.text, source="TG")
+                    await update.message.reply_text(reply)
+                    
+                application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_tg))
+                await application.initialize()
+                await application.start()
+                await application.updater.start_polling(drop_pending_updates=True)
+                print(f"\033[92m[+] Telegram Bot active.\033[0m")
+                await terminal_loop(agent)
+                return
+            except Exception as e:
+                if attempt < 2:
+                    wait = (attempt + 1) * 3
+                    print(f"\033[93m[!] Telegram Connection retry {attempt+1}/3 in {wait}s... ({e})\033[0m")
+                    await asyncio.sleep(wait)
+                else:
+                    print(f"\n\033[91m[!] Telegram Setup Failed: {e}\033[0m")
+                    print("\033[93m[*] Continuing in Terminal + Web mode.\033[0m")
+                    await terminal_loop(agent)
     else:
         print("\033[93m[!] Telegram token not set. Running in Terminal + Web mode.\033[0m")
         await terminal_loop(agent)
