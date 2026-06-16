@@ -124,7 +124,7 @@ VoidClaw is designed to be **100% portable**.
 ```
 ./termux/run.sh
 ```
-#### For Frest termux Start
+#### For Fresh termux Start
 ```
 cd VoidClaw-Agent
 ```
