@@ -1,7 +1,7 @@
 <div align="center">
   
 <!-- Main Logo -->
-<img width="80%" alt="VoidClaw" src="https://github.com/user-attachments/assets/8627d339-e841-4364-bbd9-c31552080522" />
+<img width="2167" height="406" alt="Voidclaw" src="https://github.com/user-attachments/assets/9dcf262a-956b-492b-a680-be1d01f3e8ae" />
 
 <!-- Clean Title -->
 <h1>
