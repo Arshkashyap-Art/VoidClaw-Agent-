@@ -108,10 +108,35 @@ VoidClaw is engineered to be **ultra-lightweight**. While it can harness the pow
 
 VoidClaw is designed to be **100% portable**. 
 
-### 📱 Android (Termux) - The Mobile Command Center
+## 📱 Android (Termux) - The Mobile Command Center 
 
-1.  **Install Termux:** Download [Termux from F-Droid](https://f-droid.org/en/packages/com.termux/).
-2.  **Run the Quick Setup:**
+**Install Termux:** Download [Termux from F-Droid](https://f-droid.org/en/packages/com.termux/).
+
+###  Method 1 :  (Using Termux proot-distro ubuntu) *Recommended* Fast Installation
+**Run inside termux one by one**
+```
+pkg update && pkg upgrade -y
+pkg install proot-distro -y
+proot-distro install ubuntu
+proot-distro login ubuntu
+```
+```
+git clone https://github.com/AbuZar-Ansarii/VoidClaw-Agent.git
+```
+```
+cd VoidClaw-Agent
+```
+```
+chmod +x linux/install.sh linux/run.sh && ./linux/install.sh
+```
+**Run to start VoidClaw Agent**
+```
+./linux/install.sh
+```
+
+
+###  Method 2 : (Using Raw Termux) Slow Installation
+1.  **Run the Quick Setup:**
     ```bash
     pkg update -y && pkg upgrade -y
     pkg install git -y
@@ -132,7 +157,7 @@ cd VoidClaw-Agent
 ./termux/run.sh
 ```
     
-3.  **Enable Android Control (Zero-Config Shizuku Setup):**
+2.  **Enable Android Control (Zero-Config Shizuku Setup):**
     VoidClaw now features **Auto-Provisioning** for Shizuku. No manual file moving required!
 
     *   **Step A: Install Shizuku**
@@ -150,6 +175,7 @@ cd VoidClaw-Agent
     *   **Step E: Manual Verification (Optional)**
         Exit the agent and type `rish` in Termux. If it shows a shell prompt (`$`), you are ready! Type `exit` to return.
         *(Note: Termux does NOT need to be toggled in 'Authorized applications' when using this method)*
+        
 
 ### 🪟 Windows Setup
 1. Clone Repo:
